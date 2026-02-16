@@ -10,8 +10,7 @@ export default function AdminUsers({ token }){
   async function submit(e){
     e.preventDefault()
     try{
-      const payload = { name, email }
-      if (password) payload.password = password
+      const payload = { name, email, password }
       const res = await api.createUser(payload, token)
       setMessage('Usuario creado: ' + (res.user?.email || email))
       setName('')
@@ -29,7 +28,7 @@ export default function AdminUsers({ token }){
       <form onSubmit={submit}>
         <label>Nombre<input value={name} onChange={e=>setName(e.target.value)} required/></label>
         <label>Email<input value={email} onChange={e=>setEmail(e.target.value)} type="email" required/></label>
-        <label>Contraseña (opcional, si no se crea aleatoria)<input value={password} onChange={e=>setPassword(e.target.value)} type="password"/></label>
+        <label>Contraseña<input value={password} onChange={e=>setPassword(e.target.value)} type="password" required/></label>
         <div><button type="submit">Crear vendedor</button></div>
       </form>
     </div>

@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react'
 import api from '../api'
 
-export default function Reports({ token }){
+export default function Reports({ token, user }){
   const [loading, setLoading] = useState(false)
   const [report, setReport] = useState(null)
-  const [period, setPeriod] = useState('day')
-  const [from, setFrom] = useState('')
-  const [to, setTo] = useState('')
+  const [period, setPeriod] = useState('month')
+  // Force current month range
+  const today = new Date()
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0,10)
+  const monthEnd = new Date(today.getFullYear(), today.getMonth()+1, 0).toISOString().slice(0,10)
+  const [from, setFrom] = useState(monthStart)
+  const [to, setTo] = useState(monthEnd)
 
   async function load(){
     setLoading(true)
@@ -23,65 +27,63 @@ export default function Reports({ token }){
 
   useEffect(()=>{ load() }, [])
 
+  // no-op: gastos management removed from this view
+
   return (
-    <div style={{marginTop:20}}>
+    <div className="reports">
       <h3>Reportes</h3>
-      <div style={{display:'flex', gap:8, alignItems:'center'}}>
-        <label>Periodo:
-          <select value={period} onChange={e=>setPeriod(e.target.value)} style={{marginLeft:6}}>
+
+      <div className="reports-controls">
+        <label className="reports-control">
+          Periodo:
+          <select value={period} onChange={e=>setPeriod(e.target.value)}>
             <option value="day">Día</option>
             <option value="week">Semana</option>
             <option value="month">Mes</option>
             <option value="year">Año</option>
           </select>
         </label>
-        <label style={{marginLeft:8}}>Desde:
-          <input type="date" value={from} onChange={e=>setFrom(e.target.value)} style={{marginLeft:6}} />
+        <label className="reports-control">Desde:
+          <input type="date" value={from} onChange={e=>setFrom(e.target.value)} />
         </label>
-        <label style={{marginLeft:8}}>Hasta:
-          <input type="date" value={to} onChange={e=>setTo(e.target.value)} style={{marginLeft:6}} />
+        <label className="reports-control">Hasta:
+          <input type="date" value={to} onChange={e=>setTo(e.target.value)} />
         </label>
-        <button onClick={load} style={{marginLeft:8}}>Actualizar</button>
+        <button className="reports-button" onClick={load}>Actualizar</button>
       </div>
 
-      {loading && <div>Cargando...</div>}
+      {loading && <div className="reports-loading">Cargando...</div>}
 
       {report && (
-        <div style={{marginTop:12}}>
-          <div style={{display:'flex', gap:12}}>
-            <div style={{padding:12, background:'#f3f4f6', borderRadius:6}}>
-              <strong>Desde:</strong> {report.from_label}
-            </div>
-            <div style={{padding:12, background:'#f3f4f6', borderRadius:6}}>
-              <strong>Hasta:</strong> {report.to_label}
-            </div>
-            <div style={{padding:12, background:'#eef7ff', borderRadius:6}}>
-              <strong>Recaudado:</strong> ${report.total_recaudado}
-            </div>
-            <div style={{padding:12, background:'#fff6ee', borderRadius:6}}>
-              <strong>Por cobrar:</strong> ${report.total_por_cobrar}
-            </div>
-            <div style={{padding:12, background:'#f0fff4', borderRadius:6}}>
-              <strong>Total ventas:</strong> {report.total_ventas}
-            </div>
+        <div className="reports-body">
+          <div className="reports-cards">
+            <div className="card muted"><strong>Desde:</strong><div className="card-value">{report.from_label}</div></div>
+            <div className="card muted"><strong>Hasta:</strong><div className="card-value">{report.to_label}</div></div>
+            <div className="card info"><strong>Recaudado:</strong><div className="card-value">${report.total_recaudado}</div></div>
+            <div className="card warning"><strong>Por cobrar:</strong><div className="card-value">${report.total_por_cobrar}</div></div>
+            <div className="card danger"><strong>Gastos:</strong><div className="card-value">${report.total_gastos ?? 0}</div></div>
+            <div className="card success"><strong>Recaudado neto:</strong><div className="card-value">${report.total_recaudado_neto ?? report.total_recaudado}</div></div>
+            <div className="card success"><strong>Total ventas:</strong><div className="card-value">{report.total_ventas}</div></div>
           </div>
 
-          <div style={{marginTop:12}}>
+          <div className="reports-series">
             <h4>Series</h4>
-            <table style={{width:'100%', borderCollapse:'collapse'}}>
+            <table className="series-table">
               <thead>
                 <tr>
-                  <th style={{textAlign:'left', borderBottom:'1px solid #ddd'}}>Periodo</th>
-                  <th style={{textAlign:'right', borderBottom:'1px solid #ddd'}}>Recaudado</th>
-                  <th style={{textAlign:'right', borderBottom:'1px solid #ddd'}}>Por cobrar</th>
+                  <th>Periodo</th>
+                  <th className="align-right">Recaudado</th>
+                  <th className="align-right">Por cobrar</th>
+                  <th className="align-right">Gastos</th>
                 </tr>
               </thead>
               <tbody>
                 {report.series.map(s=> (
                   <tr key={s.period}>
-                    <td style={{padding:'6px 0'}}>{s.label}</td>
-                    <td style={{textAlign:'right'}}>${s.recaudado}</td>
-                    <td style={{textAlign:'right'}}>${s.por_cobrar}</td>
+                    <td className="series-label">{s.label}</td>
+                    <td className="align-right">${s.recaudado}</td>
+                    <td className="align-right">${s.por_cobrar}</td>
+                    <td className="align-right">${s.gastos ?? 0}</td>
                   </tr>
                 ))}
               </tbody>

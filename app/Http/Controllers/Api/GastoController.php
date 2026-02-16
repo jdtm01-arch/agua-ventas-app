@@ -1,0 +1,101 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\Gasto;
+use App\Models\TipoDeGasto;
+use App\Http\Requests\StoreGastoRequest;
+
+class GastoController extends Controller
+{
+    public function index(Request $request)
+    {
+        $user = $request->user();
+        $query = Gasto::with(['tipo', 'user'])->orderBy('created_at', 'desc');
+        if (! $user->hasRole('admin')) {
+            $query->where('user_id', $user->id);
+        }
+
+        $limit = intval($request->query('limit', 50));
+        if ($limit > 0) $query->limit($limit);
+
+        $gastos = $query->get();
+        return response()->json(['data' => $gastos]);
+    }
+
+    public function store(StoreGastoRequest $request)
+    {
+        $user = $request->user();
+
+        $userId = $request->input('user_id');
+        if ($user->hasRole('admin') && $userId) {
+            $ownerId = $userId;
+        } else {
+            $ownerId = $user->id;
+        }
+
+        $gasto = Gasto::create([
+            'user_id' => $ownerId,
+            'tipo_de_gasto_id' => $request->tipo_de_gasto_id,
+            'monto' => $request->monto,
+            'descripcion' => $request->descripcion ?? null,
+        ]);
+
+        if ($request->filled('date')) {
+            try { $gasto->created_at = \Carbon\Carbon::parse($request->date); $gasto->save(); } catch (\Exception $e) {}
+        }
+
+        return response()->json(['message' => 'Gasto registrado', 'gasto' => $gasto], 201);
+    }
+
+    public function update(StoreGastoRequest $request, Gasto $gasto)
+    {
+        $user = $request->user();
+
+        $isAdmin = $user->hasRole('admin');
+        $isOwner = $gasto->user_id === $user->id;
+
+        // Vendedor puede editar solo si es dueño y gasto no mayor a 1 mes
+        if (! $isAdmin) {
+            if (! $isOwner) {
+                return response()->json(['message' => 'No autorizado'], 403);
+            }
+            if ($gasto->created_at->lt(now()->subMonth())) {
+                return response()->json(['message' => 'No puede editar gastos con más de un mes de antigüedad'], 403);
+            }
+        }
+
+        $gasto->tipo_de_gasto_id = $request->tipo_de_gasto_id ?? $gasto->tipo_de_gasto_id;
+        $gasto->monto = $request->monto ?? $gasto->monto;
+        $gasto->descripcion = $request->descripcion ?? $gasto->descripcion;
+        if ($request->filled('date')) {
+            try { $gasto->created_at = \Carbon\Carbon::parse($request->date); } catch (\Exception $e) {}
+        }
+        $gasto->save();
+
+        return response()->json(['message' => 'Gasto actualizado', 'gasto' => $gasto]);
+    }
+
+    public function destroy(Request $request, Gasto $gasto)
+    {
+        $user = $request->user();
+
+        $isAdmin = $user->hasRole('admin');
+        $isOwner = $gasto->user_id === $user->id;
+
+        if (! $isAdmin) {
+            if (! $isOwner) return response()->json(['message' => 'No autorizado'], 403);
+            if ($gasto->created_at->lt(now()->subMonth())) return response()->json(['message' => 'No puede eliminar gastos con más de un mes de antigüedad'], 403);
+        }
+
+        // Require explicit confirmation from the client
+        if (! $request->boolean('confirm')) {
+            return response()->json(['message' => 'Eliminación no autorizada: falta confirmación'], 422);
+        }
+
+        $gasto->delete();
+        return response()->json(['message' => 'Gasto eliminado']);
+    }
+}

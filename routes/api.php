@@ -15,6 +15,11 @@ Route::middleware('auth:sanctum')->group(function () {
 	Route::post('/users', [AuthController::class, 'storeByAdmin']);
 	Route::get('/ventas', [VentaController::class, 'index']);
 	Route::get('/ventas/report', [VentaReportController::class, 'index']);
+	Route::get('/tipos-de-gasto', [\App\Http\Controllers\Api\TipoDeGastoController::class, 'index']);
+	Route::get('/gastos', [\App\Http\Controllers\Api\GastoController::class, 'index']);
+	Route::post('/gastos', [\App\Http\Controllers\Api\GastoController::class, 'store']);
+	Route::put('/gastos/{gasto}', [\App\Http\Controllers\Api\GastoController::class, 'update']);
+	Route::delete('/gastos/{gasto}', [\App\Http\Controllers\Api\GastoController::class, 'destroy']);
 	Route::post('/ventas', [VentaController::class, 'store']);
 	Route::put('/ventas/{venta}', [VentaController::class, 'update']);
 	Route::delete('/ventas/{venta}', [VentaController::class, 'destroy']);

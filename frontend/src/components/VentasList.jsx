@@ -11,7 +11,7 @@ export default function VentasList({ token }){
   async function load(){
     setLoading(true)
     try{
-      const [res, me] = await Promise.all([api.getVentas(token), api.getUser(token).catch(()=>null)])
+      const [res, me] = await Promise.all([api.getVentas(token, { limit: 50 }), api.getUser(token).catch(()=>null)])
       setVentas(res.data || res.ventas || res)
       if (me) {
         // API returns { user: {...}, is_admin: bool }

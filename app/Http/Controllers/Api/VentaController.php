@@ -13,10 +13,19 @@ use Illuminate\Database\QueryException;
 
 class VentaController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize('viewAny', Venta::class);
-        $ventas = Venta::with('cliente')->orderBy('created_at', 'desc')->get();
+        $query = Venta::with('cliente')->orderBy('created_at', 'desc');
+        $user = auth()->user();
+        if ($user && ! $user->hasRole('admin')) {
+            $query->where('created_by', $user->id);
+        }
+
+        $limit = intval($request->query('limit', 50));
+        if ($limit > 0) $query->limit($limit);
+
+        $ventas = $query->get();
 
         return VentaResource::collection($ventas);
     }
@@ -32,6 +41,15 @@ class VentaController extends Controller
                 'status' => $request->status ?? 'pendiente',
                 'created_by' => $request->user()->id ?? null,
             ]);
+
+            if ($request->filled('date')) {
+                try {
+                    $venta->created_at = \Carbon\Carbon::parse($request->date);
+                    $venta->save();
+                } catch (\Exception $e) {
+                    // ignore parse errors, keep DB default
+                }
+            }
 
             $venta->load('cliente');
             return response()->json([
@@ -67,7 +85,7 @@ class VentaController extends Controller
     {
         $this->authorize('update', $venta);
 
-        $data = $request->only(['monto', 'tipo_venta']);
+        $data = $request->only(['monto', 'tipo_venta', 'date']);
 
         $validator = \Validator::make($data, [
             'monto' => 'sometimes|numeric|min:0',
@@ -79,6 +97,14 @@ class VentaController extends Controller
         }
 
         $venta->fill($data);
+        // allow updating created_at if date provided
+        if ($request->filled('date')) {
+            try {
+                $venta->created_at = \Carbon\Carbon::parse($request->date);
+            } catch (\Exception $e) {
+                // ignore
+            }
+        }
         $venta->save();
 
         return response()->json([

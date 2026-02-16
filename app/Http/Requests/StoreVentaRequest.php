@@ -18,7 +18,8 @@ class StoreVentaRequest extends FormRequest
             // canonical values: pendiente, entregado, pagado
             'status' => 'sometimes|in:pendiente,entregado,pagado',
             'tipo_venta' => 'required|in:primera,recarga',
-            'monto' => 'required|numeric|min:0'
+            'monto' => 'required|numeric|min:0',
+            'date' => 'sometimes|date'
         ];
     }
 }

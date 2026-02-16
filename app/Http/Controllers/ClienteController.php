@@ -12,10 +12,20 @@ class ClienteController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize('viewAny', Cliente::class);
-        $clientes = Cliente::orderBy('created_at', 'desc')->get();
+
+        $q = $request->query('q');
+        if ($q) {
+            $clientes = Cliente::where('nombre', 'like', "%{$q}%")
+                ->orWhere('telefono', 'like', "%{$q}%")
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
+                ->get();
+        } else {
+            $clientes = Cliente::orderBy('created_at', 'desc')->get();
+        }
 
         return ClienteResource::collection($clientes);
     }
@@ -61,7 +71,12 @@ class ClienteController extends Controller
      */
     public function update(Request $request, Cliente $cliente)
     {
-        //
+        $this->authorize('update', $cliente);
+
+        $data = $request->only(['nombre', 'telefono', 'direccion']);
+        $cliente->update($data);
+
+        return new ClienteResource($cliente);
     }
 
     /**

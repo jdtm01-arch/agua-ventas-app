@@ -36,6 +36,15 @@ class VentaReportController extends Controller
         $totalPorCobrar = (clone $baseQuery)->where('status', 'entregado')->sum('monto');
         $totalCount = (clone $baseQuery)->count();
 
+        // Sum gastos in same period and scope
+        $gastoQuery = \App\Models\Gasto::query()->whereBetween('created_at', [$fromDate, $toDate]);
+        if (! $user->hasRole('admin')) {
+            $gastoQuery->where('user_id', $user->id);
+        }
+        $totalGastos = (float) $gastoQuery->sum('monto');
+
+        $totalRecaudadoNeto = (float) $totalRecaudado - $totalGastos;
+
         $series = [];
         if (in_array($period, ['day', 'week', 'month', 'year'])) {
             // Build a full list of periods between from and to
@@ -85,6 +94,28 @@ class VentaReportController extends Controller
                     ->toArray();
             }
 
+                // compute gastos per period using same key logic
+                if ($period === 'week') {
+                    $gastoTmp = [];
+                    $gastoRaw = $gastoQuery->get(['created_at', 'monto']);
+                    foreach ($gastoRaw as $r) {
+                        $k = Carbon::parse($r->created_at)->format($format);
+                        if (! isset($gastoTmp[$k])) $gastoTmp[$k] = 0.0;
+                        $gastoTmp[$k] += (float) $r->monto;
+                    }
+                    $gastoRows = $gastoTmp;
+                } else {
+                    $gastoRows = (clone $gastoQuery)
+                        ->selectRaw($periodExpr . ", SUM(monto) as gastos")
+                        ->groupBy('period')
+                        ->orderBy('period')
+                        ->get()
+                        ->mapWithKeys(function ($r) {
+                            return [ $r->period => (float)$r->gastos ];
+                        })
+                        ->toArray();
+                }
+
             $periodStart = Carbon::parse($fromDate);
             $periodEnd = Carbon::parse($toDate);
             $carbonPeriod = CarbonPeriod::create($periodStart, $step, $periodEnd);
@@ -111,6 +142,7 @@ class VentaReportController extends Controller
                     'label' => $label,
                     'recaudado' => (float) $values['recaudado'],
                     'por_cobrar' => (float) $values['por_cobrar'],
+                    'gastos' => (float) ($gastoRows[$key] ?? 0.0),
                 ];
             }
         }
@@ -123,6 +155,8 @@ class VentaReportController extends Controller
             'total_recaudado' => (float) $totalRecaudado,
             'total_por_cobrar' => (float) $totalPorCobrar,
             'total_ventas' => $totalCount,
+            'total_gastos' => $totalGastos,
+            'total_recaudado_neto' => $totalRecaudadoNeto,
             'range_label' => $rangeLabel,
             'from_label' => $fromLabel,
             'to_label' => $toLabel,

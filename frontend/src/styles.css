@@ -5,3 +5,32 @@ input,select,button,textarea{width:100%;padding:8px;margin-top:4px;border:1px so
 button{cursor:pointer}
 .row{display:flex;gap:8px}
 .row > *{flex:1}
+
+/* Reports styles (no inline styles) */
+.reports{margin-top:20px}
+.reports-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.reports-control{margin-right:8px}
+.reports-info{color:#666}
+.reports-button{padding:8px 12px}
+.reports-loading{margin-top:12px}
+.reports-body{margin-top:12px}
+.reports-cards{display:flex;gap:12px;flex-wrap:wrap}
+.card{padding:12px;border-radius:6px;background:#fff;min-width:140px}
+.card.muted{background:#f3f4f6}
+.card.info{background:#eef7ff}
+.card.warning{background:#fff6ee}
+.card.danger{background:#ffeef0}
+.card.success{background:#f0fff4}
+.card-value{margin-top:6px;font-weight:600}
+.reports-series{margin-top:12px}
+.series-table{width:100%;border-collapse:collapse}
+.series-table th{border-bottom:1px solid #ddd;text-align:left;padding:8px}
+.series-table td{padding:6px 0}
+.align-right{text-align:right}
+.series-label{padding:6px 0}
+
+@media (max-width:720px){
+	.reports-cards{flex-direction:column}
+	.card{min-width:unset;width:100%}
+	.reports-controls{flex-direction:column;align-items:flex-start}
+}
