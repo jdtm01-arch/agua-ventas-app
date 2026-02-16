@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Cliente;
 use Illuminate\Http\Request;
+use App\Http\Requests\StoreClienteRequest;
+use App\Http\Resources\ClienteResource;
 
 class ClienteController extends Controller
 {
@@ -12,7 +14,9 @@ class ClienteController extends Controller
      */
     public function index()
     {
-        //
+        $clientes = Cliente::orderBy('created_at', 'desc')->get();
+
+        return ClienteResource::collection($clientes);
     }
 
     /**
@@ -26,15 +30,11 @@ class ClienteController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreClienteRequest $request)
     {
-        $cliente = Cliente::create($request->validate([
-            'nombre' => 'required|string|max:255',
-            'telefono' => 'required|string|max:20|unique:clientes',
-            'direccion' => 'nullable|string'
-        ]));
+        $cliente = Cliente::create($request->validated());
 
-        return response()->json($cliente, 201);
+        return (new ClienteResource($cliente))->response()->setStatusCode(201);
     }
 
 

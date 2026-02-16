@@ -6,17 +6,16 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Venta;
 use App\Http\Requests\StoreVentaRequest;
+use App\Http\Resources\VentaResource;
 
 
 class VentaController extends Controller
 {
     public function index()
     {
-        $ventas = Venta::orderBy('created_at', 'desc')->get();
+        $ventas = Venta::with('cliente')->orderBy('created_at', 'desc')->get();
 
-        return response()->json([
-            'ventas' => $ventas
-        ]);
+        return VentaResource::collection($ventas);
     }
 
     public function store(StoreVentaRequest $request)
@@ -28,16 +27,17 @@ class VentaController extends Controller
             'status' => 'pendiente'
         ]);
 
+        $venta->load('cliente');
         return response()->json([
             'message' => 'Venta creada',
-            'venta' => $venta->load('cliente')
-        ]);
+            'venta' => new VentaResource($venta)
+        ], 201);
     }
 
     public function updateStatus(Request $request, Venta $venta)
     {
         $request->validate([
-            'status' => 'required|in:pendiente,en_ruta,entregado,cancelado'
+            'status' => 'required|in:pendiente,por_entregar,pagado'
         ]);
 
         $venta->status = $request->status;

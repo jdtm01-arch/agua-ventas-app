@@ -15,7 +15,7 @@ class StoreVentaRequest extends FormRequest
     {
         return [
             'cliente_id' => 'required|exists:clientes,id',            
-            'status' => 'sometimes|in:pendiente,en_ruta,entregado,cancelado',
+            'status' => 'sometimes|in:pendiente,por_entregar,pagado',
             'tipo_venta' => 'required|in:primera,recarga',
             'monto' => 'required|numeric|min:0'
         ];
