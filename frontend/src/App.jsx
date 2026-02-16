@@ -5,6 +5,7 @@ import VentaForm from './components/VentaForm'
 import VentasList from './components/VentasList'
 import AdminUsers from './components/AdminUsers'
 import api from './api'
+import Reports from './components/Reports'
 
 export default function App(){
   const [token, setToken] = useState(localStorage.getItem('api_token') || null)
@@ -48,6 +49,7 @@ export default function App(){
             <ClienteForm token={token} />
             <VentaForm token={token} />
             <VentasList token={token} />
+            <Reports token={token} />
             {user?.is_admin && <AdminUsers token={token} />}
           </div>
         )}

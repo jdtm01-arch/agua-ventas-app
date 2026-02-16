@@ -28,5 +28,9 @@ export function deleteVenta(id, token){ return request(`/ventas/${id}`, { method
 export function updateVenta(id, payload, token){ return request(`/ventas/${id}`, { method: 'PUT', body: payload, token }) }
 export function updateStatus(id, payload, token){ return request(`/ventas/${id}/status`, { method: 'PATCH', body: payload, token }) }
 export function createUser(payload, token){ return request('/users', { method: 'POST', body: payload, token }) }
+export function getReport(token, params = {}){
+  const qs = new URLSearchParams(params).toString()
+  return request(`/ventas/report${qs?('?'+qs):''}`, { method: 'GET', token })
+}
 
-export default { login, logout, getUser, getClientes, createCliente, getVentas, createVenta, createUser, deleteVenta, updateVenta, updateStatus }
+export default { login, logout, getUser, getClientes, createCliente, getVentas, createVenta, createUser, deleteVenta, updateVenta, updateStatus, getReport }
