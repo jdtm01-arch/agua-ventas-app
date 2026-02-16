@@ -30,6 +30,15 @@ class Handler extends ExceptionHandler
         });
     }
 
+    protected function unauthenticated($request, AuthenticationException $exception)
+    {
+        return ApiResponse::error(
+            $exception->getMessage() ?: 'Unauthenticated',
+            [],
+            401
+        );
+    }
+
     public function render($request, Throwable $e)
     {
         if ($request->is('api/*') || $request->expectsJson()) {
