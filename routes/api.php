@@ -26,13 +26,3 @@ Route::middleware('auth:sanctum')->group(function () {
 	Route::patch('/ventas/{venta}/status', [VentaController::class, 'updateStatus']);
 	Route::apiResource('clientes', ClienteController::class);
 });
-
-Route::get('/crear-admin', function () {
-    \App\Models\User::create([
-        'name' => 'Admin',
-        'email' => 'admin@test.com',
-        'password' => bcrypt('123456')
-    ]);
-
-    return 'Usuario creado';
-});
