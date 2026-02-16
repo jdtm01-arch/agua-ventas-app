@@ -36,18 +36,3 @@ Route::get('/crear-admin', function () {
 
     return 'Usuario creado';
 });
-
-Route::get('/hacer-admin', function () {
-
-    // Crear rol si no existe
-    $role = \Spatie\Permission\Models\Role::firstOrCreate([
-        'name' => 'admin',
-        'guard_name' => 'web'
-    ]);
-
-    $user = \App\Models\User::find(1);
-    $user->assignRole($role);
-
-    return 'Ahora es admin';
-});
-
