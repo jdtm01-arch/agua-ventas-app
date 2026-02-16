@@ -13,6 +13,24 @@ export default function App(){
   const [token, setToken] = useState(localStorage.getItem('api_token') || null)
   const [user, setUser] = useState(null)
 
+    React.useEffect(() => {
+    async function fetchUser(){
+        if(token && !user){
+        try{
+            const res = await api.getUser(token)
+            const fetchedUser = res.user || res
+            if (res.is_admin) fetchedUser.is_admin = true
+            setUser(fetchedUser)
+        }catch(e){
+            console.error("Error fetching user", e)
+            onLogout()
+        }
+        }
+    }
+
+    fetchUser()
+    }, [token])
+
   async function onLogin(tokenValue, providedUser, isAdmin){
     localStorage.setItem('api_token', tokenValue)
     setToken(tokenValue)

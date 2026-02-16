@@ -15,19 +15,15 @@ async function submit(e){
     const user = res.user || res
     const isAdmin = res.is_admin ?? false
 
-    // 👇 AGREGAR ESTO
+    // 🔥 AGREGAR ESTO
     localStorage.setItem("token", token)
     localStorage.setItem("isAdmin", isAdmin ? "1" : "0")
     localStorage.setItem("user", JSON.stringify(user))
 
-
     onLogin(token, user, isAdmin)
 
   }catch(err){
-    setError(
-      err?.data?.message ||
-      (err?.data?.errors ? JSON.stringify(err.data.errors) : 'Error')
-    )
+    setError('Error')
   }
 }
 
