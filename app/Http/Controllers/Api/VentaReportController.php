@@ -55,16 +55,17 @@ class VentaReportController extends Controller
             } elseif ($period === 'week') {
                 $step = '1 week';
                 $format = 'o-W';
-                $periodExpr = "strftime('%Y-%W', created_at) as period";
+                $periodExpr = "TO_CHAR(created_at, 'IYYY-IW') as period";
             } elseif ($period === 'month') {
                 $step = '1 month';
                 $format = 'Y-m';
-                $periodExpr = "strftime('%Y-%m', created_at) as period";
+                $periodExpr = "TO_CHAR(created_at, 'YYYY-MM') as period";
             } else {
                 $step = '1 year';
                 $format = 'Y';
-                $periodExpr = "strftime('%Y', created_at) as period";
+                $periodExpr = "TO_CHAR(created_at, 'YYYY') as period";
             }
+
 
             if ($period === 'week') {
                 // SQLite week formatting can differ from PHP's ISO week; aggregate in PHP to ensure consistent keys

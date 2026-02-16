@@ -6,18 +6,30 @@ export default function Login({ onLogin }){
   const [password,setPassword] = useState('')
   const [error,setError] = useState(null)
 
-  async function submit(e){
-    e.preventDefault()
-    try{
-      const res = await api.login({ email, password })
-      const token = res.token || res?.data?.token
-      const user = res.user || res
-      const isAdmin = res.is_admin ?? false
-      onLogin(token, user, isAdmin)
-    }catch(err){
-      setError(err?.data?.message || (err?.data?.errors ? JSON.stringify(err.data.errors) : 'Error'))
-    }
+async function submit(e){
+  e.preventDefault()
+  try{
+    const res = await api.login({ email, password })
+
+    const token = res.token || res?.data?.token
+    const user = res.user || res
+    const isAdmin = res.is_admin ?? false
+
+    // 👇 AGREGAR ESTO
+    localStorage.setItem("token", token)
+    localStorage.setItem("isAdmin", isAdmin ? "1" : "0")
+    localStorage.setItem("user", JSON.stringify(user))
+
+
+    onLogin(token, user, isAdmin)
+
+  }catch(err){
+    setError(
+      err?.data?.message ||
+      (err?.data?.errors ? JSON.stringify(err.data.errors) : 'Error')
+    )
   }
+}
 
   return (
     <div>
