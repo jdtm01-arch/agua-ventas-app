@@ -24,6 +24,9 @@ export function getClientes(token){ return request('/clientes', { method: 'GET',
 export function createCliente(payload, token){ return request('/clientes', { method: 'POST', body: payload, token }) }
 export function getVentas(token){ return request('/ventas', { method: 'GET', token }) }
 export function createVenta(payload, token){ return request('/ventas', { method: 'POST', body: payload, token }) }
+export function deleteVenta(id, token){ return request(`/ventas/${id}`, { method: 'DELETE', token }) }
+export function updateVenta(id, payload, token){ return request(`/ventas/${id}`, { method: 'PUT', body: payload, token }) }
+export function updateStatus(id, payload, token){ return request(`/ventas/${id}/status`, { method: 'PATCH', body: payload, token }) }
 export function createUser(payload, token){ return request('/users', { method: 'POST', body: payload, token }) }
 
-export default { login, logout, getUser, getClientes, createCliente, getVentas, createVenta, createUser }
+export default { login, logout, getUser, getClientes, createCliente, getVentas, createVenta, createUser, deleteVenta, updateVenta, updateStatus }
