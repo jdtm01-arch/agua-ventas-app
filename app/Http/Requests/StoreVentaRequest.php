@@ -15,7 +15,8 @@ class StoreVentaRequest extends FormRequest
     {
         return [
             'cliente_id' => 'required|exists:clientes,id',            
-            'status' => 'sometimes|in:pendiente,por_entregar,pagado',
+            // canonical values: pendiente, entregado, pagado
+            'status' => 'sometimes|in:pendiente,entregado,pagado',
             'tipo_venta' => 'required|in:primera,recarga',
             'monto' => 'required|numeric|min:0'
         ];

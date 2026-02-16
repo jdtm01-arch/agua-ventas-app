@@ -18,7 +18,7 @@ return new class extends Migration
             $table->decimal('monto', 8, 2);
             $table->enum('status', [
                 'pendiente',
-                'por_entregar',
+                'entregado',
                 'pagado'
             ])->default('pendiente');
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import Login from './components/Login'
 import ClienteForm from './components/ClienteForm'
 import VentaForm from './components/VentaForm'
+import VentasList from './components/VentasList'
 
 export default function App(){
   const [token, setToken] = useState(localStorage.getItem('api_token') || null)
@@ -33,6 +34,7 @@ export default function App(){
             </div>
             <ClienteForm token={token} />
             <VentaForm token={token} />
+            <VentasList token={token} />
           </div>
         )}
       </div>

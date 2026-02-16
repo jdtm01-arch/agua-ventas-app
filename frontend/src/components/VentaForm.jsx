@@ -6,6 +6,7 @@ export default function VentaForm({ token }){
   const [clienteId, setClienteId] = useState('')
   const [tipo, setTipo] = useState('recarga')
   const [monto, setMonto] = useState('')
+  const [status, setStatus] = useState('pendiente')
   const [message, setMessage] = useState(null)
 
   async function load(){
@@ -20,11 +21,14 @@ export default function VentaForm({ token }){
   async function submit(e){
     e.preventDefault()
     try{
-      await api.createVenta({ cliente_id: clienteId, tipo_venta: tipo, monto: parseFloat(monto) }, token)
+      await api.createVenta({ cliente_id: clienteId, tipo_venta: tipo, monto: parseFloat(monto), status }, token)
       setMessage('Venta creada')
       setMonto('')
+      window.dispatchEvent(new Event('ventas-updated'))
     }catch(err){
-      setMessage('Error creando venta')
+      console.error('createVenta error', err)
+      const errMsg = err?.data?.message || err?.data || err?.message || 'Error creando venta'
+      setMessage(String(errMsg))
     }
   }
 
@@ -43,6 +47,13 @@ export default function VentaForm({ token }){
           <select value={tipo} onChange={e=>setTipo(e.target.value)}>
             <option value="recarga">Recarga</option>
             <option value="primera">Primera</option>
+          </select>
+        </label>
+        <label>Status
+          <select value={status} onChange={e=>setStatus(e.target.value)}>
+            <option value="pendiente">Pendiente</option>
+            <option value="entregado">Entregado</option>
+            <option value="pagado">Pagado</option>
           </select>
         </label>
         <label>Monto<input value={monto} onChange={e=>setMonto(e.target.value)} type="number" step="0.01" required/></label>
