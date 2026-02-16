@@ -36,3 +36,10 @@ Route::get('/crear-admin', function () {
 
     return 'Usuario creado';
 });
+
+Route::get('/hacer-admin', function () {
+    $user = \App\Models\User::find(1);
+    $user->assignRole('admin');
+
+    return 'Ahora es admin';
+});
