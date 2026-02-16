@@ -15,6 +15,7 @@ class VentaController extends Controller
 {
     public function index()
     {
+        $this->authorize('viewAny', Venta::class);
         $ventas = Venta::with('cliente')->orderBy('created_at', 'desc')->get();
 
         return VentaResource::collection($ventas);
@@ -22,12 +23,14 @@ class VentaController extends Controller
 
     public function store(StoreVentaRequest $request)
     {
+        $this->authorize('create', Venta::class);
         try {
             $venta = Venta::create([
                 'cliente_id' => $request->cliente_id,
                 'tipo_venta' => $request->tipo_venta,
                 'monto' => $request->monto ?? $request->total,
-                'status' => $request->status ?? 'pendiente'
+                'status' => $request->status ?? 'pendiente',
+                'created_by' => $request->user()->id ?? null,
             ]);
 
             $venta->load('cliente');
@@ -49,6 +52,8 @@ class VentaController extends Controller
             'status' => 'required|in:pendiente,entregado,pagado'
         ]);
 
+        $this->authorize('update', $venta);
+
         $venta->status = $request->status;
         $venta->save();
 
@@ -56,5 +61,38 @@ class VentaController extends Controller
             'message' => 'Estado actualizado',
             'venta' => $venta
         ]);
+    }
+
+    public function update(Request $request, Venta $venta)
+    {
+        $this->authorize('update', $venta);
+
+        $data = $request->only(['monto', 'tipo_venta']);
+
+        $validator = \Validator::make($data, [
+            'monto' => 'sometimes|numeric|min:0',
+            'tipo_venta' => 'sometimes|in:primera,recarga'
+        ]);
+
+        if ($validator->fails()) {
+            return ApiResponse::error('Datos inválidos', $validator->errors(), 422);
+        }
+
+        $venta->fill($data);
+        $venta->save();
+
+        return response()->json([
+            'message' => 'Venta actualizada',
+            'venta' => new VentaResource($venta->load('cliente'))
+        ]);
+    }
+
+    public function destroy(Venta $venta)
+    {
+        $this->authorize('delete', $venta);
+
+        $venta->delete();
+
+        return response()->json(['message' => 'Venta eliminada']);
     }
 }

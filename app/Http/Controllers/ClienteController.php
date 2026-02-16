@@ -14,6 +14,7 @@ class ClienteController extends Controller
      */
     public function index()
     {
+        $this->authorize('viewAny', Cliente::class);
         $clientes = Cliente::orderBy('created_at', 'desc')->get();
 
         return ClienteResource::collection($clientes);
@@ -32,6 +33,7 @@ class ClienteController extends Controller
      */
     public function store(StoreClienteRequest $request)
     {
+        $this->authorize('create', Cliente::class);
         $cliente = Cliente::create($request->validated());
 
         return (new ClienteResource($cliente))->response()->setStatusCode(201);

@@ -14,18 +14,18 @@ class AuthTest extends TestCase
     {
         // Seed roles required by Spatie permissions
         $this->seed(RolesSeeder::class);
-        // 1) Register
-        $registerData = [
+        // Create a user directly (registration is admin-only in this app)
+        $user = \App\Models\User::create([
             'name' => 'Tester',
             'email' => 'tester@example.com',
-            'password' => 'secret123',
-        ];
+            'password' => bcrypt('secret123'),
+        ]);
+        if (method_exists($user, 'assignRole')) {
+            $user->assignRole('user');
+        }
 
-        $resp = $this->postJson('/api/register', $registerData);
-        $resp->assertStatus(201);
-        $this->assertArrayHasKey('token', $resp->json());
-
-        $token = $resp->json('token');
+        // create token for authentication
+        $token = $user->createToken('api-token')->plainTextToken;
 
         // 2) Access protected route with token (me)
         $this->withHeader('Authorization', 'Bearer '.$token)

@@ -27,7 +27,7 @@ class ClientesVentasTest extends TestCase
         // Create user and authenticate via Sanctum
         $user = User::factory()->create();
         if (method_exists($user, 'assignRole')) {
-            $user->assignRole('user');
+            $user->assignRole('vendedor');
         }
 
         $this->actingAs($user, 'sanctum');

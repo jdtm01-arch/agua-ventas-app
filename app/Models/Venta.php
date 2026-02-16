@@ -11,12 +11,18 @@ class Venta extends Model
         'cliente_id',
         'tipo_venta',
         'monto',
-        'status'
+        'status',
+        'created_by'
     ];
 
     public function cliente()
     {
         return $this->belongsTo(Cliente::class);
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'created_by');
     }
 }
 

@@ -17,7 +17,6 @@ async function request(path, { method = 'GET', body, token } = {}) {
   return data
 }
 
-export function register(payload){ return request('/register', { method: 'POST', body: payload }) }
 export function login(payload){ return request('/login', { method: 'POST', body: payload }) }
 export function logout(token){ return request('/logout', { method: 'POST', token }) }
 export function getUser(token){ return request('/user', { method: 'GET', token }) }
@@ -25,5 +24,6 @@ export function getClientes(token){ return request('/clientes', { method: 'GET',
 export function createCliente(payload, token){ return request('/clientes', { method: 'POST', body: payload, token }) }
 export function getVentas(token){ return request('/ventas', { method: 'GET', token }) }
 export function createVenta(payload, token){ return request('/ventas', { method: 'POST', body: payload, token }) }
+export function createUser(payload, token){ return request('/users', { method: 'POST', body: payload, token }) }
 
-export default { register, login, logout, getUser, getClientes, createCliente, getVentas, createVenta }
+export default { login, logout, getUser, getClientes, createCliente, getVentas, createVenta, createUser }

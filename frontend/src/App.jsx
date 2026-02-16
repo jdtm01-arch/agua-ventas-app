@@ -3,15 +3,28 @@ import Login from './components/Login'
 import ClienteForm from './components/ClienteForm'
 import VentaForm from './components/VentaForm'
 import VentasList from './components/VentasList'
+import AdminUsers from './components/AdminUsers'
+import api from './api'
 
 export default function App(){
   const [token, setToken] = useState(localStorage.getItem('api_token') || null)
   const [user, setUser] = useState(null)
 
-  function onLogin(token, user){
+  async function onLogin(token, user, isAdmin){
     localStorage.setItem('api_token', token)
     setToken(token)
-    setUser(user)
+    // try to fetch fresh user info
+    try{
+      const res = await api.getUser(token)
+      const fetchedUser = res.user || res
+      if (res.is_admin) fetchedUser.is_admin = true
+      setUser(fetchedUser)
+    }catch(e){
+      // fallback to provided user
+      const fallback = user || {}
+      if (isAdmin) fallback.is_admin = true
+      setUser(fallback)
+    }
   }
 
   function onLogout(){
@@ -35,6 +48,7 @@ export default function App(){
             <ClienteForm token={token} />
             <VentaForm token={token} />
             <VentasList token={token} />
+            {user?.is_admin && <AdminUsers token={token} />}
           </div>
         )}
       </div>
