@@ -1,10 +1,10 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-class UpdateAdminPassword20260217 extends Migration
+return new class extends Migration
 {
     public function up()
     {
@@ -17,6 +17,7 @@ class UpdateAdminPassword20260217 extends Migration
 
     public function down()
     {
-        // no-op: cannot safely revert admin password
+        //
     }
-}
+};
+
