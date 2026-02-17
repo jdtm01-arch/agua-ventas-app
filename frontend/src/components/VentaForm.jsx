@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import api from '../api'
 
 export default function VentaForm({ token }){
@@ -7,6 +7,7 @@ export default function VentaForm({ token }){
   const [search, setSearch] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [selectedCliente, setSelectedCliente] = useState(null)
+  const blurTimeoutRef = useRef(null)
   const [tipo, setTipo] = useState('recarga')
   const [monto, setMonto] = useState('')
   const [status, setStatus] = useState('pendiente')
@@ -61,11 +62,30 @@ export default function VentaForm({ token }){
       <form onSubmit={submit}>
         <label>Cliente
           <div style={{position:'relative'}}>
-            <input placeholder="Buscar por nombre o teléfono" value={selectedCliente ? (selectedCliente.nombre + ' — ' + (selectedCliente.telefono||'')) : search} onChange={e=>{ setSearch(e.target.value); setSelectedCliente(null); setClienteId('') }} />
+            <input 
+              placeholder="Buscar por nombre o teléfono" 
+              value={selectedCliente ? (selectedCliente.nombre + ' — ' + (selectedCliente.telefono||'')) : search} 
+              onChange={e=>{ setSearch(e.target.value); setSelectedCliente(null); setClienteId('') }}
+              onBlur={()=>{ blurTimeoutRef.current = setTimeout(()=>setSuggestions([]), 200) }}
+              onFocus={()=>{ if(blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current) }}
+            />
             {suggestions.length>0 && !selectedCliente && (
               <ul style={{position:'absolute', zIndex:20, background:'#fff', border:'1px solid #ddd', listStyle:'none', padding:6, margin:0, width:'100%', maxHeight:'300px', overflowY:'auto', boxShadow:'0 2px 8px rgba(0,0,0,0.15)'}}>
                 {suggestions.map(s=> (
-                  <li key={s.id} style={{padding:'10px 8px', cursor:'pointer', touchAction:'manipulation', WebkitTapHighlightColor:'rgba(0,0,0,0.1)', borderBottom:'1px solid #eee'}} onMouseDown={(e)=>{ e.preventDefault(); setSelectedCliente(s); setClienteId(s.id); setSuggestions([]); setSearch('') }} onTouchStart={(e)=>{ setSelectedCliente(s); setClienteId(s.id); setSuggestions([]); setSearch('') }}>{s.nombre} {s.telefono?('— '+s.telefono):''}</li>
+                  <li 
+                    key={s.id} 
+                    style={{padding:'10px 8px', cursor:'pointer', touchAction:'manipulation', WebkitTapHighlightColor:'rgba(0,0,0,0.1)', borderBottom:'1px solid #eee'}} 
+                    onPointerDown={(e)=>{ 
+                      e.preventDefault();
+                      if(blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
+                      setSelectedCliente(s); 
+                      setClienteId(s.id); 
+                      setSuggestions([]); 
+                      setSearch('')
+                    }}
+                  >
+                    {s.nombre} {s.telefono?('— '+s.telefono):''}
+                  </li>
                 ))}
               </ul>
             )}
