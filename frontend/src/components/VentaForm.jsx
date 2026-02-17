@@ -63,9 +63,9 @@ export default function VentaForm({ token }){
           <div style={{position:'relative'}}>
             <input placeholder="Buscar por nombre o teléfono" value={selectedCliente ? (selectedCliente.nombre + ' — ' + (selectedCliente.telefono||'')) : search} onChange={e=>{ setSearch(e.target.value); setSelectedCliente(null); setClienteId('') }} />
             {suggestions.length>0 && !selectedCliente && (
-              <ul style={{position:'absolute', zIndex:20, background:'#fff', border:'1px solid #ddd', listStyle:'none', padding:6, margin:0, width:'100%'}}>
+              <ul style={{position:'absolute', zIndex:20, background:'#fff', border:'1px solid #ddd', listStyle:'none', padding:6, margin:0, width:'100%', maxHeight:'300px', overflowY:'auto', boxShadow:'0 2px 8px rgba(0,0,0,0.15)'}}>
                 {suggestions.map(s=> (
-                  <li key={s.id} style={{padding:'6px 8px', cursor:'pointer'}} onClick={()=>{ setSelectedCliente(s); setClienteId(s.id); setSuggestions([]); setSearch('') }}>{s.nombre} {s.telefono?('— '+s.telefono):''}</li>
+                  <li key={s.id} style={{padding:'10px 8px', cursor:'pointer', touchAction:'manipulation', WebkitTapHighlightColor:'rgba(0,0,0,0.1)', borderBottom:'1px solid #eee'}} onMouseDown={(e)=>{ e.preventDefault(); setSelectedCliente(s); setClienteId(s.id); setSuggestions([]); setSearch('') }} onTouchStart={(e)=>{ setSelectedCliente(s); setClienteId(s.id); setSuggestions([]); setSearch('') }}>{s.nombre} {s.telefono?('— '+s.telefono):''}</li>
                 ))}
               </ul>
             )}

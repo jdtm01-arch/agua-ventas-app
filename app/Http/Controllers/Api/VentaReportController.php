@@ -48,22 +48,25 @@ class VentaReportController extends Controller
         $series = [];
         if (in_array($period, ['day', 'week', 'month', 'year'])) {
             // Build a full list of periods between from and to
+            // Detect database driver
+            $driver = DB::connection()->getDriverName();
+            
             if ($period === 'day') {
                 $step = '1 day';
                 $format = 'Y-m-d';
-                $periodExpr = "DATE(created_at) as period";
+                $periodExpr = ($driver === 'sqlite') ? "date(created_at) as period" : "DATE(created_at) as period";
             } elseif ($period === 'week') {
                 $step = '1 week';
                 $format = 'o-W';
-                $periodExpr = "TO_CHAR(created_at, 'IYYY-IW') as period";
+                $periodExpr = ($driver === 'sqlite') ? "strftime('%Y-%W', created_at) as period" : "TO_CHAR(created_at, 'IYYY-IW') as period";
             } elseif ($period === 'month') {
                 $step = '1 month';
                 $format = 'Y-m';
-                $periodExpr = "TO_CHAR(created_at, 'YYYY-MM') as period";
+                $periodExpr = ($driver === 'sqlite') ? "strftime('%Y-%m', created_at) as period" : "TO_CHAR(created_at, 'YYYY-MM') as period";
             } else {
                 $step = '1 year';
                 $format = 'Y';
-                $periodExpr = "TO_CHAR(created_at, 'YYYY') as period";
+                $periodExpr = ($driver === 'sqlite') ? "strftime('%Y', created_at) as period" : "TO_CHAR(created_at, 'YYYY') as period";
             }
 
 
@@ -95,27 +98,27 @@ class VentaReportController extends Controller
                     ->toArray();
             }
 
-                // compute gastos per period using same key logic
-                if ($period === 'week') {
-                    $gastoTmp = [];
-                    $gastoRaw = $gastoQuery->get(['created_at', 'monto']);
-                    foreach ($gastoRaw as $r) {
-                        $k = Carbon::parse($r->created_at)->format($format);
-                        if (! isset($gastoTmp[$k])) $gastoTmp[$k] = 0.0;
-                        $gastoTmp[$k] += (float) $r->monto;
-                    }
-                    $gastoRows = $gastoTmp;
-                } else {
-                    $gastoRows = (clone $gastoQuery)
-                        ->selectRaw($periodExpr . ", SUM(monto) as gastos")
-                        ->groupBy('period')
-                        ->orderBy('period')
-                        ->get()
-                        ->mapWithKeys(function ($r) {
-                            return [ $r->period => (float)$r->gastos ];
-                        })
-                        ->toArray();
+            // compute gastos per period using same key logic
+            if ($period === 'week') {
+                $gastoTmp = [];
+                $gastoRaw = $gastoQuery->get(['created_at', 'monto']);
+                foreach ($gastoRaw as $r) {
+                    $k = Carbon::parse($r->created_at)->format($format);
+                    if (! isset($gastoTmp[$k])) $gastoTmp[$k] = 0.0;
+                    $gastoTmp[$k] += (float) $r->monto;
                 }
+                $gastoRows = $gastoTmp;
+            } else {
+                $gastoRows = (clone $gastoQuery)
+                    ->selectRaw($periodExpr . ", SUM(monto) as gastos")
+                    ->groupBy('period')
+                    ->orderBy('period')
+                    ->get()
+                    ->mapWithKeys(function ($r) {
+                        return [ $r->period => (float)$r->gastos ];
+                    })
+                    ->toArray();
+            }
 
             $periodStart = Carbon::parse($fromDate);
             $periodEnd = Carbon::parse($toDate);

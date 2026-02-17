@@ -15,10 +15,13 @@ async function submit(e){
     const user = res.user || res
     const isAdmin = res.is_admin ?? false
 
-    // 🔥 AGREGAR ESTO
-    localStorage.setItem("token", token)
+    // 🔥 AGREGAR ESTO LOCAL
+    localStorage.setItem("api_token", token)
+
+    // 🔥 AGREGAR ESTO PRODUCCION
+    /*localStorage.setItem("token", token)
     localStorage.setItem("isAdmin", isAdmin ? "1" : "0")
-    localStorage.setItem("user", JSON.stringify(user))
+    localStorage.setItem("user", JSON.stringify(user))*/
 
     onLogin(token, user, isAdmin)
 
