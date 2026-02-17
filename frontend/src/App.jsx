@@ -8,6 +8,8 @@ import GastosForm from './components/GastosForm'
 import GastosList from './components/GastosList'
 import api from './api'
 import Reports from './components/Reports'
+import Header from './components/Header'
+import Footer from './components/Footer'
 
 export default function App(){
   const [token, setToken] = useState(localStorage.getItem('api_token') || null)
@@ -54,7 +56,7 @@ export default function App(){
 
   return (
     <div>
-      <h1 style={{textAlign:'center'}}>Agua Ventas (Frontend demo)</h1>
+      <Header />
       <div className="card">
         {!token ? (
           <Login onLogin={onLogin} />
@@ -68,6 +70,7 @@ export default function App(){
           </div>
         )}
       </div>
+      <Footer />
     </div>
   )
 }
