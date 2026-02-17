@@ -14,6 +14,7 @@ import Footer from './components/Footer'
 export default function App(){
   const [token, setToken] = useState(localStorage.getItem('api_token') || null)
   const [user, setUser] = useState(null)
+  const [view, setView] = useState(null)
 
     React.useEffect(() => {
     async function fetchUser(){
@@ -56,17 +57,16 @@ export default function App(){
 
   return (
     <div>
-      <Header />
+      <Header user={user} onLogout={onLogout} view={view || (user?.is_admin ? 'reportes' : 'ventas')} setView={setView} />
       <div className="card">
         {!token ? (
           <Login onLogin={onLogin} />
         ) : (
           <div>
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-              <div>Usuario: {user?.email || 'conectado'}</div>
-              <button onClick={onLogout}>Logout</button>
+              <div style={{fontSize:14,color:'var(--muted)'}}>Usuario: {user?.email || 'conectado'}</div>
             </div>
-            <Dashboard token={token} user={user} />
+            <Dashboard token={token} user={user} view={view || (user?.is_admin ? 'reportes' : 'ventas')} setView={setView} />
           </div>
         )}
       </div>
@@ -75,34 +75,9 @@ export default function App(){
   )
 }
 
-function Dashboard({ token, user }){
-  const [view, setView] = React.useState(user?.is_admin ? 'reportes' : 'ventas')
-
-  const adminButtons = [
-    { key: 'reportes', label: 'Reportes' },
-    { key: 'ventas', label: 'Ventas' },
-    { key: 'clientes', label: 'Clientes' },
-    { key: 'gastos', label: 'Gastos' },
-    { key: 'usuarios', label: 'Usuarios' },
-  ]
-
-  const vendedorButtons = [
-    { key: 'ventas', label: 'Ventas' },
-    { key: 'clientes', label: 'Clientes' },
-    { key: 'gastos', label: 'Gastos' },
-    { key: 'reportes', label: 'Reportes' },
-  ]
-
-  const buttons = user?.is_admin ? adminButtons : vendedorButtons
-
+function Dashboard({ token, user, view, setView }){
   return (
     <div style={{marginTop:12}}>
-      <div style={{display:'flex', gap:8, marginBottom:12}}>
-        {buttons.map(b => (
-          <button key={b.key} onClick={()=>setView(b.key)} style={{padding:'8px 12px'}}>{b.label}</button>
-        ))}
-      </div>
-
       <div style={{border:'1px solid #eee', padding:12, borderRadius:6}}>
         {view === 'reportes' && <Reports token={token} user={user} />}
         {view === 'ventas' && (
