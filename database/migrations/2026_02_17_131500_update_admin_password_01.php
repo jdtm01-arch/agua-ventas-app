@@ -6,18 +6,18 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up()
+    public function up(): void
     {
         $email = env('INITIAL_ADMIN_EMAIL', 'admin@test.com');
-        DB::table('users')->where('email', $email)->update([
-            'password' => Hash::make('Admin12345@@'),
-            'updated_at' => now(),
-        ]);
-    }
 
-    public function down()
-    {
-        //
+        $affected = DB::table('users')
+            ->where('email', $email)
+            ->update([
+                'password' => Hash::make('Admin12345@@'),
+                'updated_at' => now(),
+            ]);
+
+        logger("Filas afectadas: " . $affected);
     }
 };
 
