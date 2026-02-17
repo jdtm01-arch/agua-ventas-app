@@ -18,8 +18,9 @@ class ClienteController extends Controller
 
         $q = $request->query('q');
         if ($q) {
-            $clientes = Cliente::where('nombre', 'like', "%{$q}%")
-                ->orWhere('telefono', 'like', "%{$q}%")
+            // Case-insensitive search compatible with SQLite, PostgreSQL and MySQL
+            $clientes = Cliente::whereRaw('LOWER(nombre) like ?', ['%'.strtolower($q).'%'])
+                ->orWhereRaw('LOWER(telefono) like ?', ['%'.strtolower($q).'%'])
                 ->orderBy('created_at', 'desc')
                 ->limit(10)
                 ->get();
