@@ -77,6 +77,7 @@ button{cursor:pointer}
 .card-value{margin-top:6px;font-weight:600}
 .reports-series{margin-top:12px}
 .series-table{width:100%;border-collapse:collapse}
+.series-cards{display:none}
 .series-table th{border-bottom:1px solid #ddd;text-align:left;padding:8px}
 .series-table td{padding:6px 0}
 .align-right{text-align:right}
@@ -389,6 +390,16 @@ form > button[type="submit"]{margin-top:16px}
   .reports-dates .reports-control{flex:1}
   .reports-action{width:100%}
   .reports-action .reports-button{width:100%}
+
+  /* Hide series table on small screens and show series as mini-cards */
+  .series-table{display:none}
+  .series-cards{display:block;margin-top:8px}
+  .series-card{background:#fff;border:1px solid #eee;padding:10px;border-radius:8px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.03)}
+  .series-card-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .series-card-label{font-weight:700;color:var(--text-color)}
+  .series-card-values{display:flex;flex-direction:column;gap:6px}
+  .series-card-item{font-size:13px;display:flex;justify-content:space-between;gap:12px}
+  .series-card-item strong{font-weight:600;margin-right:6px}
 }
 
 @media (max-width:900px){

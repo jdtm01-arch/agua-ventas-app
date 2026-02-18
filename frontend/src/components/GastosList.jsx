@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import api from '../api'
 import ConfirmModal from './ConfirmModal'
 import EditGastoModal from './EditGastoModal'
-import { LIMITE_EDICION } from '../config'
+import { LIMITE_EDICION, PAGINACION } from '../config'
 
 export default function GastosList({ token, onChanged }){
   const [gastos, setGastos] = useState([])
@@ -16,14 +16,34 @@ export default function GastosList({ token, onChanged }){
   const [loading, setLoading] = useState(false)
   const [user, setUser] = useState(null)
   const [isSmall, setIsSmall] = useState(false)
+  const [page, setPage] = useState(1)
+  const [hasNext, setHasNext] = useState(false)
+  const perPage = Number(PAGINACION) || 20
+  const [totalGastos, setTotalGastos] = useState(0)
   const [confirmGastoId, setConfirmGastoId] = useState(null)
   const [showConfirmGasto, setShowConfirmGasto] = useState(false)
 
-  async function load(){
+  async function load(p = 1){
     setLoading(true)
     try{
-      const res = await api.getGastos(token, { limit: 50 })
-      setGastos(res.data || res)
+      const params = { per_page: perPage, page: p }
+      const res = await api.getGastos(token, params)
+      let items = res.data || res.gastos || res || []
+      // order from most recent to oldest by created_at
+      items = items.slice().sort((a,b)=>{
+        const da = new Date(a.created_at || a.createdAt || null)
+        const db = new Date(b.created_at || b.createdAt || null)
+        if (isNaN(da)) return 1
+        if (isNaN(db)) return -1
+        return db.getTime() - da.getTime()
+      })
+      const meta = res.meta || {}
+      const lastPage = Number(meta.last_page) || Number(res.last_page) || 1
+      const currentPage = Number(meta.current_page) || Number(res.current_page) || p
+      const total = Number(meta.total) || Number(res.total) || (Array.isArray(res) ? items.length : 0)
+      setGastos(items)
+      setHasNext(currentPage < lastPage)
+      setTotalGastos(total)
     }catch(e){ console.error(e) }
     setLoading(false)
   }
@@ -36,17 +56,20 @@ export default function GastosList({ token, onChanged }){
     mq.addEventListener?.('change', onMq)
     if (!mq.addEventListener) mq.addListener(onMq)
 
-    load()
+    load(page)
     api.getTiposDeGasto(token).then(r=>setTipos(r.data || r)).catch(()=>setTipos([]))
     // fetch current user to evaluate permissions
     api.getUser(token).then(r=>{ const u = r.user || r; if (r.is_admin) u.is_admin = true; setUser(u) }).catch(()=>setUser(null))
   }, [])
 
   useEffect(()=>{
-    function handler(){ load() }
+    function handler(){ load(page) }
     window.addEventListener('gastos-updated', handler)
     return ()=> window.removeEventListener('gastos-updated', handler)
-  }, [])
+  }, [page])
+
+  // reload when page changes
+  useEffect(()=>{ load(page) }, [page])
 
   function startEdit(g){
     const isAdmin = user?.is_admin || user?.roles?.includes?.('admin') || user?.role === 'admin'
@@ -82,7 +105,7 @@ export default function GastosList({ token, onChanged }){
       const payloadDate = editDate ? `${editDate}T00:00:00-05:00` : undefined
       const payload = { tipo_de_gasto_id: editTipo, monto: Number(editMonto), descripcion: editDescripcion.trim(), date: payloadDate }
       await api.updateGasto(id, payload, token)
-      await load()
+      await load(page)
       setEditingId(null)
       if (onChanged) onChanged()
     }catch(err){ console.error(err); alert('Error actualizando gasto') }
@@ -109,7 +132,7 @@ export default function GastosList({ token, onChanged }){
     setLoading(true)
     try{
       await api.deleteGasto(id, true, token)
-      await load()
+      await load(page)
       if (onChanged) onChanged()
     }catch(err){ console.error(err); alert('Error eliminando gasto') }
     setLoading(false)
@@ -117,7 +140,10 @@ export default function GastosList({ token, onChanged }){
 
   return (
     <div style={{marginTop:12}}>
-      <h2>Gastos</h2>
+      <div style={{display:'flex',alignItems:'baseline',gap:12}}>
+        <h2 style={{margin:0}}>Gastos</h2>
+        <div style={{fontSize:13,color:'#666'}}>Mostrando {gastos.length} de {totalGastos}</div>
+      </div>
       {loading && <div className="loader" role="status" aria-label="Cargando gastos"></div>}
       {(!loading && gastos.length===0) && <div>No hay gastos</div>}
       {!loading && gastos.length>0 && (
@@ -238,8 +264,18 @@ export default function GastosList({ token, onChanged }){
           gasto={editingGasto}
           tipos={tipos}
           onClose={()=> setEditingGasto(null)}
-          onSaved={()=>{ load(); setEditingGasto(null); if (onChanged) onChanged() }}
+          onSaved={()=>{ load(page); setEditingGasto(null); if (onChanged) onChanged() }}
+          
         />
+      )}
+      {gastos.length>0 && (
+        <div className="ventas-pagination" style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:12}}>
+          <div>
+            <button className="btn-ghost pagination-btn" onClick={()=> setPage(p => Math.max(1, p-1))} disabled={page<=1}>Anterior</button>
+            <button className="btn-ghost pagination-btn" onClick={()=> setPage(p => p+1)} disabled={!hasNext} style={{marginLeft:8}}>Siguiente</button>
+          </div>
+          <div style={{fontSize:13,color:'#666'}}>Página {page}</div>
+        </div>
       )}
     </div>
   )

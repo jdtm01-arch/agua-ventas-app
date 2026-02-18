@@ -43,6 +43,16 @@ export default function Reports({ token, user }){
 
   useEffect(()=>{ load() }, [])
 
+  // prepare sorted series (most recent first)
+  const sortedSeries = (report && Array.isArray(report.series)) ? [...report.series].sort((a,b)=>{
+    const pa = a.period || a.label || ''
+    const pb = b.period || b.label || ''
+    const da = Date.parse(pa)
+    const db = Date.parse(pb)
+    if (!isNaN(da) && !isNaN(db)) return db - da
+    return String(pb).localeCompare(String(pa))
+  }) : []
+
   // no-op: gastos management removed from this view
 
   return (
@@ -103,7 +113,7 @@ export default function Reports({ token, user }){
                 </tr>
               </thead>
               <tbody>
-                {report.series.map(s=> {
+                {sortedSeries.map(s=> {
                   const r = Number(s.recaudado) || 0
                   const p = Number(s.por_cobrar) || 0
                   const g = Number(s.gastos) || 0
@@ -118,6 +128,33 @@ export default function Reports({ token, user }){
                 })}
               </tbody>
             </table>
+            </div>
+
+            {/* Mobile: series as mini-cards. Only render periods that have any non-zero value. */}
+            <div className="series-cards" aria-hidden={sortedSeries.length===0 ? 'true' : 'false'}>
+              {sortedSeries.filter(s=> {
+                const r = Number(s.recaudado) || 0
+                const p = Number(s.por_cobrar) || 0
+                const g = Number(s.gastos) || 0
+                return (r !== 0 || p !== 0 || g !== 0)
+              }).map(s=> {
+                const r = Number(s.recaudado) || 0
+                const p = Number(s.por_cobrar) || 0
+                const g = Number(s.gastos) || 0
+                const label = s.label ? (String(s.label).includes('-') ? formatDateDMY(s.label) : s.label) : formatDateDMY(s.period)
+                return (
+                  <div className="series-card" key={`card-${s.period}`}>
+                    <div className="series-card-row">
+                      <div className="series-card-label">{label}</div>
+                    </div>
+                    <div className="series-card-values">
+                      <div className={`series-card-item recaudado ${r===0? 'is-zero':''}`}><strong>Recaudado:</strong> <span>{formatCurrency(r)}</span></div>
+                      <div className={`series-card-item por-cobrar ${p===0? 'is-zero':''}`}><strong>Por cobrar:</strong> <span>{formatCurrency(p)}</span></div>
+                      <div className={`series-card-item gastos ${g===0? 'is-zero':''}`}><strong>Gastos:</strong> <span>{formatCurrency(g)}</span></div>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>

@@ -18,11 +18,14 @@ class GastoController extends Controller
             $query->where('user_id', $user->id);
         }
 
-        $limit = intval($request->query('limit', 50));
-        if ($limit > 0) $query->limit($limit);
+        // Support both 'per_page' (Laravel paginate standard) and 'limit' (legacy)
+        $perPage = intval($request->query('per_page', $request->query('limit', 15)));
+        if ($perPage <= 0) $perPage = 15;
+        if ($perPage > 100) $perPage = 100; // cap max
 
-        $gastos = $query->get();
-        return response()->json(['data' => $gastos]);
+        $gastos = $query->paginate($perPage);
+
+        return response()->json($gastos);
     }
 
     public function store(StoreGastoRequest $request)
