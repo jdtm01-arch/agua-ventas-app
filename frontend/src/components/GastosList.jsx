@@ -149,6 +149,7 @@ export default function GastosList({ token, onChanged }){
           message={`¿Eliminar gasto #${confirmGastoId}? Esta acción no se puede deshacer.`}
           confirmText="Eliminar"
           cancelText="Cancelar"
+          danger={true}
           onConfirm={()=> confirmDeleteGasto(confirmGastoId)}
           onCancel={()=>{ setShowConfirmGasto(false); setConfirmGastoId(null) }}
         />

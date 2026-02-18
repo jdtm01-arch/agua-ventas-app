@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 
-export default function ConfirmModal({ open, title = 'Confirmar', message = '', confirmText = 'Confirmar', cancelText = 'Cancelar', onConfirm, onCancel }){
+export default function ConfirmModal({ open, title = 'Confirmar', message = '', confirmText = 'Confirmar', cancelText = 'Cancelar', onConfirm, onCancel, danger = false }){
   const ref = useRef(null)
   const [isOpen, setIsOpen] = useState(false)
 
@@ -27,7 +27,7 @@ export default function ConfirmModal({ open, title = 'Confirmar', message = '', 
         {message && <div className="modal-message">{message}</div>}
         <div className="modal-footer">
           <button type="button" className="btn-ghost" onClick={onCancel}>{cancelText}</button>
-          <button type="button" className="action-btn" onClick={onConfirm}>{confirmText}</button>
+          <button type="button" className={`btn-primary ${danger ? 'btn-danger' : ''}`} onClick={onConfirm}>{confirmText}</button>
         </div>
       </div>
     </div>

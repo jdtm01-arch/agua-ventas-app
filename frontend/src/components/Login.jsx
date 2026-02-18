@@ -42,6 +42,7 @@ async function submit(e){
         <form onSubmit={submit}>
           <label>Correo Electrónico</label>
           <input 
+            data-cy="email"
             value={email} 
             onChange={e=>setEmail(e.target.value)} 
             type="email" 
@@ -50,6 +51,7 @@ async function submit(e){
           />
           <label>Contraseña</label>
           <input 
+            data-cy="password"
             value={password} 
             onChange={e=>setPassword(e.target.value)} 
             type="password" 
@@ -57,7 +59,7 @@ async function submit(e){
             required
           />
           <div className="row">
-            <button type="submit">Iniciar Sesión</button>
+            <button data-cy="login-btn" type="submit">Iniciar Sesión</button>
           </div>
         </form>
       </div>

@@ -95,7 +95,7 @@ export default function VentasList({ token }){
     <div style={{marginTop:16}}>
       <div className="ventas-header">
         <div style={{display:'flex',alignItems:'baseline',gap:12}}>
-          <h2 style={{margin:0}}>Ventas</h2>
+          <h2 data-cy="dashboard-title" style={{margin:0}}>Ventas</h2>
           <div style={{fontSize:13,color:'#666'}}>Mostrando {ventas.length} de {totalVentas}</div>
         </div>
         <div className="ventas-filter">
@@ -260,6 +260,7 @@ export default function VentasList({ token }){
           message={`Confirmar eliminación de la venta #${confirmDeleteId} ?`}
           confirmText="Eliminar"
           cancelText="Cancelar"
+          danger={true}
           onConfirm={async ()=>{
             try{
               await api.deleteVenta(confirmDeleteId, token)
@@ -272,10 +273,10 @@ export default function VentasList({ token }){
         />
       )}
       {ventas.length>0 && (
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:12}}>
+        <div className="ventas-pagination" style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:12}}>
           <div>
-            <button onClick={()=> setPage(p => Math.max(1, p-1))} disabled={page<=1}>Anterior</button>
-            <button onClick={()=> setPage(p => p+1)} disabled={!hasNext} style={{marginLeft:8}}>Siguiente</button>
+            <button className="btn-ghost pagination-btn" onClick={()=> setPage(p => Math.max(1, p-1))} disabled={page<=1}>Anterior</button>
+            <button className="btn-ghost pagination-btn" onClick={()=> setPage(p => p+1)} disabled={!hasNext} style={{marginLeft:8}}>Siguiente</button>
           </div>
           <div style={{fontSize:13,color:'#666'}}>Página {page}</div>
         </div>

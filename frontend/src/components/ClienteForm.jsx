@@ -155,7 +155,7 @@ export default function ClienteForm({ token }){
         <div className="button-submit-right">
           <button type="submit">{editing ? 'Guardar cambios' : 'Crear cliente'}</button>
           {editing && <button type="button" onClick={cancelEdit}>Cancelar</button>}
-          {editing && <button type="button" onClick={handleDeleteCliente} style={{marginLeft:8}} className="action-btn danger" aria-label="Eliminar cliente"><i className="fi fi-sr-trash" aria-hidden style={{marginRight:6}}></i>Eliminar cliente</button>}
+          {editing && <button type="button" onClick={handleDeleteCliente} style={{marginLeft:8}} className="btn-danger" aria-label="Eliminar cliente"><i className="fi fi-sr-trash" aria-hidden style={{marginRight:6}}></i>Eliminar cliente</button>}
         </div>
       </form>
 
@@ -196,6 +196,7 @@ export default function ClienteForm({ token }){
             confirmText="Eliminar"
             cancelText="Cancelar"
             onConfirm={confirmDeleteCliente}
+            danger={true}
             onCancel={()=>{ setShowConfirmDelete(false); setConfirmClienteId(null) }}
           />
         )}
