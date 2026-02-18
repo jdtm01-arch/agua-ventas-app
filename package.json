@@ -5,6 +5,8 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite"
+    ,
+        "venta-e2e": "npx cypress run --spec \"cypress/e2e/ventas-e2e/venta-crud.cy.js\" && npx cypress run --spec \"cypress/e2e/ventas-e2e/venta-edit.cy.js\" && npx cypress run --spec \"cypress/e2e/ventas-e2e/venta-delete.cy.js\""
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",
