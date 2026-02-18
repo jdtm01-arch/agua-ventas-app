@@ -44,7 +44,7 @@ describe('Editar última venta E2E', () => {
 
         // Wait for modal, take screenshot (before editing)
         cy.get('.modal-dialog', { timeout: 10000 }).should('be.visible')
-        cy.screenshot('02-edit-01-open')
+        cy.screenshot('02-venta-edit-01-open')
 
         // Fill fields inside modal
         cy.get('.modal-dialog').within(() => {
@@ -53,7 +53,7 @@ describe('Editar última venta E2E', () => {
           // change monto (input[type=number])
           cy.get('input[type="number"]').clear().type(String(newMonto))
           // screenshot before submit
-          cy.screenshot('02-edit-02-filled')
+          cy.screenshot('02-venta-edit-02-filled')
           // submit
           cy.contains('button', 'Guardar').click()
         })
@@ -66,7 +66,7 @@ describe('Editar última venta E2E', () => {
         cy.get('table tbody', { timeout: 60000 }).contains('tr', String(ventaId), { timeout: 60000 }).as('updatedRow')
         cy.get('@updatedRow').should('contain.text', newMonto)
         cy.get('@updatedRow').should('contain.text', newStatus.toUpperCase())
-        cy.screenshot('02-edit-03-after')
+        cy.screenshot('02-venta-edit-03-after')
       })
     })
   })

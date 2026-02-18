@@ -1,18 +1,21 @@
 import React, { useEffect, useState } from 'react'
 import api from '../api'
 import ConfirmModal from './ConfirmModal'
+import EditGastoModal from './EditGastoModal'
 import { LIMITE_EDICION } from '../config'
 
 export default function GastosList({ token, onChanged }){
   const [gastos, setGastos] = useState([])
   const [tipos, setTipos] = useState([])
   const [editingId, setEditingId] = useState(null)
+  const [editingGasto, setEditingGasto] = useState(null)
   const [editTipo, setEditTipo] = useState('')
   const [editMonto, setEditMonto] = useState('')
   const [editDescripcion, setEditDescripcion] = useState('')
   const [editDate, setEditDate] = useState(new Date().toISOString().slice(0,10))
   const [loading, setLoading] = useState(false)
   const [user, setUser] = useState(null)
+  const [isSmall, setIsSmall] = useState(false)
   const [confirmGastoId, setConfirmGastoId] = useState(null)
   const [showConfirmGasto, setShowConfirmGasto] = useState(false)
 
@@ -26,6 +29,13 @@ export default function GastosList({ token, onChanged }){
   }
 
   useEffect(()=>{
+    // detect small screens for card layout
+    const mq = window.matchMedia('(max-width:720px)')
+    const onMq = e=> setIsSmall(e.matches)
+    setIsSmall(mq.matches)
+    mq.addEventListener?.('change', onMq)
+    if (!mq.addEventListener) mq.addListener(onMq)
+
     load()
     api.getTiposDeGasto(token).then(r=>setTipos(r.data || r)).catch(()=>setTipos([]))
     // fetch current user to evaluate permissions
@@ -46,13 +56,8 @@ export default function GastosList({ token, onChanged }){
     const ageDays = createdDate ? Math.floor((Date.now() - createdDate.getTime()) / (1000*60*60*24)) : 9999
     const canEdit = isAdmin || (isCreator && ageDays <= Number(LIMITE_EDICION))
     if (!canEdit) { alert('No puedes editar este gasto. Solo administradores o el creador dentro de ' + LIMITE_EDICION + ' días pueden editarlo.'); return }
-    setEditingId(g.id)
-    setEditTipo(g.tipo_de_gasto_id)
-    setEditMonto(String(g.monto))
-    setEditDescripcion(g.descripcion || '')
-    // extract YYYY-MM-DD safely to avoid timezone shift when rendering
-    const m = String(g.created_at).match(/^(\d{4}-\d{2}-\d{2})/)
-    setEditDate(m ? m[1] : (new Date(g.created_at)).toISOString().slice(0,10))
+    // open edit modal with selected gasto
+    setEditingGasto(g)
   }
 
   function canEditGasto(g){
@@ -115,33 +120,106 @@ export default function GastosList({ token, onChanged }){
       <h2>Gastos</h2>
       {loading && <div className="loader" role="status" aria-label="Cargando gastos"></div>}
       {(!loading && gastos.length===0) && <div>No hay gastos</div>}
-      <ul>
-        {gastos.map(g => (
-          <li key={g.id} style={{marginBottom:6}}>
-              {editingId === g.id ? (
-              <div style={{display:'flex', gap:8, alignItems:'center'}}>
-                <select value={editTipo} onChange={e=>setEditTipo(e.target.value)}>
-                  <option value="">Seleccione tipo</option>
-                  {tipos.map(t=> <option key={t.id} value={t.id}>{t.nombre}</option>)}
-                </select>
-                <input style={{width:100}} type="number" step="0.1" value={editMonto} onChange={e=>setEditMonto(e.target.value)} />
-                <input type="date" value={editDate} onChange={e=>setEditDate(e.target.value)} />
-                <input placeholder="Descripción" value={editDescripcion} onChange={e=>setEditDescripcion(e.target.value)} />
-                <button onClick={()=>saveEdit(g.id)} disabled={loading}>{loading? 'Guardando...' : 'Guardar'}</button>
-                <button onClick={cancelEdit} disabled={loading}>Cancelar</button>
-              </div>
-            ) : (
-              <div style={{display:'flex', gap:8, alignItems:'center'}}>
-                <div style={{flex:1}}>{g.tipo?.nombre || g.tipo_de_gasto_id} — {formatCurrency(g.monto)} — {formatDate(g.created_at)}</div>
-                <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                  {canEditGasto(g) ? <button className="action-btn" onClick={()=>startEdit(g)} aria-label={`Editar gasto ${g.id}`}><i className="fi fi-rr-edit" aria-hidden></i></button> : <span style={{display:'inline-flex',alignItems:'center',gap:4,padding:'6px 8px',color:'#999',fontSize:13}} title='Antiguo — no editable'><i className="fi fi-rr-edit" style={{marginRight:6,opacity:0.35}} aria-hidden></i>Editar</span>}
-                  {canEditGasto(g) ? <button className="action-btn danger" onClick={()=>handleDelete(g.id)} aria-label={`Eliminar gasto ${g.id}`}><i className="fi fi-sr-trash" aria-hidden></i></button> : <span style={{display:'inline-flex',alignItems:'center',gap:4,padding:'6px 8px',color:'#999',fontSize:13}} title='Antiguo — no eliminable'><i className="fi fi-sr-trash" style={{marginRight:6,opacity:0.35}} aria-hidden></i>Eliminar</span>}
+      {!loading && gastos.length>0 && (
+        <>
+        {!isSmall && (
+          <div style={{overflowX:'auto'}}>
+            <table className="ventas-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Fecha</th>
+                  <th>Tipo</th>
+                  <th>Monto (S/)</th>
+                  <th>Descripción</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {gastos.map(g=> (
+                  <tr key={g.id}>
+                    <td>{g.id}</td>
+                    <td>{formatDate(g.created_at || g.createdAt)}</td>
+                    <td>{g.tipo?.nombre || g.tipo_de_gasto_id}</td>
+                    <td>{formatCurrency(g.monto)}</td>
+                    <td style={{maxWidth:320}}>{g.descripcion || ''}</td>
+                    <td>
+                      {(() => {
+                        const isAdmin = user?.is_admin || user?.roles?.includes?.('admin') || user?.role === 'admin'
+                        const isCreator = user && g.user_id && user.id === g.user_id
+                        const createdPart = String(g.created_at || g.createdAt || '').match(/^(\d{4}-\d{2}-\d{2})/)
+                        const createdDate = createdPart ? new Date(createdPart[1]) : (g.created_at ? new Date(g.created_at) : null)
+                        const ageDays = createdDate ? Math.floor((Date.now() - createdDate.getTime()) / (1000*60*60*24)) : 9999
+                        const canEdit = isAdmin || (isCreator && ageDays <= Number(LIMITE_EDICION))
+                        const canDelete = isAdmin || (isCreator && ageDays <= Number(LIMITE_EDICION))
+                        const isLocked = isCreator && ageDays > Number(LIMITE_EDICION) && !isAdmin
+                        if (canEdit) {
+                          return (
+                            <>
+                              <button className="action-btn" onClick={()=>startEdit(g)} aria-label={`Editar gasto ${g.id}`} title="Editar"><i className="fi fi-rr-edit" aria-hidden></i></button>
+                              <button className="action-btn danger" onClick={()=>handleDelete(g.id)} aria-label={`Eliminar gasto ${g.id}`} title="Eliminar" style={{marginLeft:6}}><i className="fi fi-sr-trash" aria-hidden></i></button>
+                            </>
+                          )
+                        }
+                        return isLocked ? (
+                          <span className="badge-locked" title="Bloqueado — no editable" aria-label="Registro bloqueado" style={{display:'inline-flex',alignItems:'center',gap:6}}>
+                            <i className="fi fi-ss-lock" aria-hidden></i>
+                          </span>
+                        ) : (
+                          <span className="badge-muted">Sin permiso</span>
+                        )
+                      })()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {isSmall && (
+          <div className="ventas-cards">
+            {gastos.map(g=> (
+              <div className="venta-card" key={g.id}>
+                <div className="venta-row"><strong>ID:</strong> {g.id}</div>
+                <div className="venta-row"><strong>Fecha:</strong> {formatDate(g.created_at || g.createdAt)}</div>
+                <div className="venta-row"><strong>Tipo:</strong> {g.tipo?.nombre || g.tipo_de_gasto_id}</div>
+                <div className="venta-row"><strong>Monto (S/):</strong> {formatCurrency(g.monto)}</div>
+                <div className="venta-row"><strong>Descripción:</strong> {g.descripcion || ''}</div>
+                <div className="venta-actions">
+                  {(() => {
+                    const isAdmin = user?.is_admin || user?.roles?.includes?.('admin') || user?.role === 'admin'
+                    const isCreator = user && g.user_id && user.id === g.user_id
+                    const createdPart = String(g.created_at || g.createdAt || '').match(/^(\d{4}-\d{2}-\d{2})/)
+                    const createdDate = createdPart ? new Date(createdPart[1]) : (g.created_at ? new Date(g.created_at) : null)
+                    const ageDays = createdDate ? Math.floor((Date.now() - createdDate.getTime()) / (1000*60*60*24)) : 9999
+                    const canEdit = isAdmin || (isCreator && ageDays <= Number(LIMITE_EDICION))
+                    const canDelete = isAdmin || (isCreator && ageDays <= Number(LIMITE_EDICION))
+                    const isLocked = isCreator && ageDays > Number(LIMITE_EDICION) && !isAdmin
+                    if (canEdit) {
+                      return (
+                        <>
+                          <button className="action-btn" onClick={()=>startEdit(g)} aria-label={`Editar gasto ${g.id}`} title="Editar"><i className="fi fi-rr-edit" aria-hidden></i></button>
+                          <button className="action-btn danger" onClick={()=>handleDelete(g.id)} aria-label={`Eliminar gasto ${g.id}`} title="Eliminar" style={{marginLeft:8}}><i className="fi fi-sr-trash" aria-hidden></i></button>
+                        </>
+                      )
+                    }
+                    return isLocked ? (
+                      <span className="action-muted" title={'Bloqueado — no editable por antigüedad'} style={{display:'inline-flex',alignItems:'center',gap:6}}>
+                        <i className="fi fi-ss-lock" aria-hidden></i>
+                        Editar
+                      </span>
+                    ) : (
+                      <span className="action-muted">Sin permiso</span>
+                    )
+                  })()}
                 </div>
               </div>
-            )}
-          </li>
-        ))}
-      </ul>
+            ))}
+          </div>
+        )}
+        </>
+      )}
       {showConfirmGasto && (
         <ConfirmModal
           open={showConfirmGasto}
@@ -152,6 +230,15 @@ export default function GastosList({ token, onChanged }){
           danger={true}
           onConfirm={()=> confirmDeleteGasto(confirmGastoId)}
           onCancel={()=>{ setShowConfirmGasto(false); setConfirmGastoId(null) }}
+        />
+      )}
+      {editingGasto && (
+        <EditGastoModal
+          token={token}
+          gasto={editingGasto}
+          tipos={tipos}
+          onClose={()=> setEditingGasto(null)}
+          onSaved={()=>{ load(); setEditingGasto(null); if (onChanged) onChanged() }}
         />
       )}
     </div>

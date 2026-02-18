@@ -170,13 +170,9 @@ export default function VentasList({ token }){
                           <i className="fi fi-sr-trash" aria-hidden></i>
                         </button>
                       ) : (
-                        v.status==='pagado' ? (
-                          <span className="badge-locked" title="Pagado — no editable" aria-label="No editable, venta pagada" style={{marginLeft:8,display:'inline-flex',alignItems:'center',gap:6}}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                              <path d="M17 8V7a5 5 0 0 0-10 0v1" stroke="#1f7a34" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <rect x="4" y="8" width="16" height="12" rx="2" stroke="#1f7a34" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M12 13v3" stroke="#1f7a34" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
+                        isLocked ? (
+                          <span className="badge-locked" title="Bloqueado — no editable" aria-label="Registro bloqueado" style={{marginLeft:8,display:'inline-flex',alignItems:'center',gap:6}}>
+                            <i className="fi fi-ss-lock" aria-hidden></i>
                           </span>
                         ) : (
                           <span className="badge-muted" style={{marginLeft:8}}>{'Sin permiso'}</span>
@@ -228,10 +224,17 @@ export default function VentasList({ token }){
                         <i className="fi fi-rr-edit" aria-hidden></i>
                       </button>
                     ) : (
-                      <span className="action-muted" title={isLocked ? 'Pagado — no editable por antigüedad' : undefined}>
-                        <i className="fi fi-rr-edit" style={{opacity:0.35,marginRight:6}} aria-hidden></i>
-                        Editar
-                      </span>
+                      isLocked ? (
+                        <span className="action-muted" title={'Bloqueado — no editable por antigüedad'} style={{display:'inline-flex',alignItems:'center',gap:6}}>
+                          <i className="fi fi-ss-lock" aria-hidden></i>
+                          Editar
+                        </span>
+                      ) : (
+                        <span className="action-muted" title={undefined}>
+                          <i className="fi fi-rr-edit" style={{opacity:0.35,marginRight:6}} aria-hidden></i>
+                          Editar
+                        </span>
+                      )
                     )}
                     <span className="action-sep">|</span>
                     {canDelete ? (
@@ -239,10 +242,17 @@ export default function VentasList({ token }){
                         <i className="fi fi-sr-trash" aria-hidden></i>
                       </button>
                     ) : (
-                      <span className="action-muted" title={isLocked ? 'Pagado — no eliminable por antigüedad' : undefined}>
-                        <i className="fi fi-sr-trash" style={{opacity:0.35,marginRight:6}} aria-hidden></i>
-                        Eliminar
-                      </span>
+                      isLocked ? (
+                        <span className="action-muted" title={'Bloqueado — no eliminable por antigüedad'} style={{display:'inline-flex',alignItems:'center',gap:6}}>
+                          <i className="fi fi-ss-lock" aria-hidden></i>
+                          Eliminar
+                        </span>
+                      ) : (
+                        <span className="action-muted" title={undefined}>
+                          <i className="fi fi-sr-trash" style={{opacity:0.35,marginRight:6}} aria-hidden></i>
+                          Eliminar
+                        </span>
+                      )
                     )}
                   </div>
                 </div>

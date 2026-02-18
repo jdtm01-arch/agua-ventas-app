@@ -117,11 +117,13 @@ export default function EditVentaModal({ token, venta, onClose, onSaved }){
             </label>
           </div>
           <div className="mb-8">
-            <label>Monto (S/)<input type="number" step="0.1" value={monto} onChange={e=>setMonto(e.target.value)} required/></label>
+            <label>Monto (S/)
+              <input type="number" step="0.1" placeholder="Monto (S/)" value={monto} onChange={e=>setMonto(e.target.value)} required/>
+            </label>
           </div>
           <div className="mb-8">
             <label>Fecha
-              <input type="date" value={date} onChange={e=>setDate(e.target.value)} />
+              <input type="date" placeholder="YYYY-MM-DD" value={date} onChange={e=>setDate(e.target.value)} />
             </label>
             <div style={{fontSize:12,color:'#666'}}>Zona horaria: America/Lima (GMT-5)</div>
           </div>

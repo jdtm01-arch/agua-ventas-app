@@ -11,6 +11,7 @@ export default function VentaForm({ token }){
   const blurTimeoutRef = useRef(null)
   const [tipo, setTipo] = useState('recarga')
   const [monto, setMonto] = useState('')
+  const [montoError, setMontoError] = useState('')
   const [status, setStatus] = useState('pendiente')
   const [date, setDate] = useState(new Date().toISOString().slice(0,10))
   const [message, setMessage] = useState(null)
@@ -45,9 +46,12 @@ export default function VentaForm({ token }){
     const re = /^\d{4}-\d{2}-\d{2}$/
     if (date && !re.test(date)) { setMessage({ text: 'Formato de fecha inválido. Use YYYY-MM-DD', type: 'error' }); return }
     if (!clienteId) { setMessage({ text: 'Seleccione un cliente de la lista', type: 'error' }); if (searchInputRef.current) searchInputRef.current.focus(); return }
+    // monto validation: numeric and >= 0
+    const parsedMonto = parseFloat(monto)
+    if (isNaN(parsedMonto) || parsedMonto < 0) { setMessage({ text: 'El monto debe ser un número mayor o igual a 0', type: 'error' }); return }
     try{
       const isoDate = date ? `${date}T00:00:00-05:00` : undefined
-      await api.createVenta({ cliente_id: clienteId, tipo_venta: tipo, monto: parseFloat(monto), status, date: isoDate }, token)
+      await api.createVenta({ cliente_id: clienteId, tipo_venta: tipo, monto: parsedMonto, status, date: isoDate }, token)
       setMessage({ text: 'Venta creada', type: 'success' })
       // clear form
       setMonto('')
@@ -146,7 +150,29 @@ export default function VentaForm({ token }){
 
           <div className="venta-field monto">
             <label>Monto (S/)</label>
-            <input value={monto} onChange={e=>setMonto(e.target.value)} type="number" step="0.1" required/>
+            <input
+              value={monto}
+              onChange={e=>{
+                let v = e.target.value || ''
+                // remove any non-digit and non-dot and non-leading minus, then remove minus to avoid negatives
+                v = v.replace(/[^0-9.]/g, '')
+                // ensure only one dot
+                const parts = v.split('.')
+                if (parts.length > 2) v = parts[0] + '.' + parts.slice(1).join('')
+                // limit length
+                if (v.length > 15) v = v.slice(0,15)
+                setMonto(v)
+                const p = parseFloat(v)
+                if (v === '' || isNaN(p) || p < 0) setMontoError('El monto debe ser un número mayor o igual a 0')
+                else setMontoError('')
+              }}
+              type="number"
+              step="0.1"
+              min="0"
+              placeholder="Monto (S/)"
+              required
+            />
+            {montoError && <div className="field-error">{montoError}</div>}
           </div>
 
           <div className="venta-field fecha">
