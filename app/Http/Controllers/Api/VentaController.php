@@ -22,10 +22,21 @@ class VentaController extends Controller
             $query->where('created_by', $user->id);
         }
 
-        $limit = intval($request->query('limit', 50));
-        if ($limit > 0) $query->limit($limit);
+        // allow filtering by status (pendiente, entregado, pagado)
+        $status = $request->query('status');
+        if ($status) {
+            $allowed = ['pendiente','entregado','pagado'];
+            if (in_array($status, $allowed)) {
+                $query->where('status', $status);
+            }
+        }
 
-        $ventas = $query->get();
+        // Support both 'per_page' (Laravel paginate standard) and 'limit' (legacy)
+        $perPage = intval($request->query('per_page', $request->query('limit', 15)));
+        if ($perPage <= 0) $perPage = 15;
+        if ($perPage > 100) $perPage = 100; // cap max
+
+        $ventas = $query->paginate($perPage);
 
         return VentaResource::collection($ventas);
     }

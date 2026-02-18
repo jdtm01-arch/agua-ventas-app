@@ -7,12 +7,16 @@ export default function VentaForm({ token }){
   const [search, setSearch] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [selectedCliente, setSelectedCliente] = useState(null)
+  const [clienteError, setClienteError] = useState(false)
   const blurTimeoutRef = useRef(null)
   const [tipo, setTipo] = useState('recarga')
   const [monto, setMonto] = useState('')
   const [status, setStatus] = useState('pendiente')
   const [date, setDate] = useState(new Date().toISOString().slice(0,10))
   const [message, setMessage] = useState(null)
+  const messageRef = useRef(null)
+  const messageTimeoutRef = useRef(null)
+  const searchInputRef = useRef(null)
 
   async function load(){
     try{
@@ -39,77 +43,126 @@ export default function VentaForm({ token }){
     e.preventDefault()
     // validate date format (YYYY-MM-DD) and timezone hint for Peru
     const re = /^\d{4}-\d{2}-\d{2}$/
-    if (date && !re.test(date)) { setMessage('Formato de fecha inválido. Use YYYY-MM-DD'); return }
-    if (!clienteId) { setMessage('Seleccione un cliente de la lista'); return }
+    if (date && !re.test(date)) { setMessage({ text: 'Formato de fecha inválido. Use YYYY-MM-DD', type: 'error' }); return }
+    if (!clienteId) { setMessage({ text: 'Seleccione un cliente de la lista', type: 'error' }); if (searchInputRef.current) searchInputRef.current.focus(); return }
     try{
       const isoDate = date ? `${date}T00:00:00-05:00` : undefined
       await api.createVenta({ cliente_id: clienteId, tipo_venta: tipo, monto: parseFloat(monto), status, date: isoDate }, token)
-      setMessage('Venta creada')
+      setMessage({ text: 'Venta creada', type: 'success' })
+      // clear form
       setMonto('')
       setDate(new Date().toISOString().slice(0,10))
+      setSelectedCliente(null)
+      setClienteId('')
+      setSearch('')
+      setSuggestions([])
       window.dispatchEvent(new Event('ventas-updated'))
     }catch(err){
       console.error('createVenta error', err)
       const errMsg = err?.data?.message || err?.data || err?.message || 'Error creando venta'
-      setMessage(String(errMsg))
+      setMessage({ text: String(errMsg), type: 'error' })
     }
   }
 
+  useEffect(()=>{
+    if (!message) return
+    // focus message for accessibility
+    if (messageRef.current) messageRef.current.focus()
+    if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current)
+    messageTimeoutRef.current = setTimeout(()=> setMessage(null), 5000)
+    return ()=>{
+      if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current)
+    }
+  }, [message])
+
   return (
     <div style={{marginTop:16}}>
-      <h3>Crear Venta</h3>
-      {message && <div>{message}</div>}
-      <form onSubmit={submit}>
-        <label>Cliente
-          <div style={{position:'relative'}}>
-            <input 
-              placeholder="Buscar por nombre o teléfono" 
-              value={selectedCliente ? (selectedCliente.nombre + ' — ' + (selectedCliente.telefono||'')) : search} 
-              onChange={e=>{ setSearch(e.target.value); setSelectedCliente(null); setClienteId('') }}
-              onBlur={()=>{ blurTimeoutRef.current = setTimeout(()=>setSuggestions([]), 200) }}
-              onFocus={()=>{ if(blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current) }}
-            />
-            {suggestions.length>0 && !selectedCliente && (
-              <ul style={{position:'absolute', zIndex:20, background:'#fff', border:'1px solid #ddd', listStyle:'none', padding:6, margin:0, width:'100%', maxHeight:'300px', overflowY:'auto', boxShadow:'0 2px 8px rgba(0,0,0,0.15)'}}>
-                {suggestions.map(s=> (
-                  <li 
-                    key={s.id} 
-                    style={{padding:'10px 8px', cursor:'pointer', touchAction:'manipulation', WebkitTapHighlightColor:'rgba(0,0,0,0.1)', borderBottom:'1px solid #eee'}} 
-                    onPointerDown={(e)=>{ 
-                      e.preventDefault();
-                      if(blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
-                      setSelectedCliente(s); 
-                      setClienteId(s.id); 
-                      setSuggestions([]); 
-                      setSearch('')
-                    }}
-                  >
-                    {s.nombre} {s.telefono?('— '+s.telefono):''}
-                  </li>
-                ))}
-              </ul>
-            )}
+      <h2>Crear Venta</h2>
+      {message && (
+        <div ref={messageRef} tabIndex={-1} className={message.type === 'error' ? 'message-error' : 'message-success'}>
+          {message.text}
+        </div>
+      )}
+      <form onSubmit={submit} className="venta-form">
+        <div className="venta-row venta-row-1">
+          <div className="venta-field cliente">
+            <label>Cliente <span style={{color:'#c53030'}}>*</span></label>
+            <div style={{position:'relative'}}>
+              <input 
+                ref={searchInputRef}
+                aria-required={true}
+                required
+                placeholder="Buscar por nombre o teléfono" 
+                value={selectedCliente ? (selectedCliente.nombre + ' — ' + (selectedCliente.telefono||'')) : search} 
+                onChange={e=>{ setSearch(e.target.value); setSelectedCliente(null); setClienteId(''); setClienteError(false) }}
+                onBlur={()=>{ blurTimeoutRef.current = setTimeout(()=>{ setSuggestions([]); if(!selectedCliente) setClienteError(true) }, 200) }}
+                onFocus={()=>{ if(blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current); setClienteError(false) }}
+              />
+              {suggestions.length>0 && !selectedCliente && (
+                <ul className="suggestions-list">
+                  {suggestions.map(s=> (
+                    <li 
+                      key={s.id} 
+                      className="suggestion-item"
+                      onPointerDown={(e)=>{ 
+                        e.preventDefault();
+                        if(blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
+                        setSelectedCliente(s); 
+                        setClienteId(s.id); 
+                        setSuggestions([]); 
+                        setClienteError(false);
+                        setSearch('')
+                      }}
+                    >
+                      {s.nombre} {s.telefono?('— '+s.telefono):''}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {clienteError && !selectedCliente && (
+                <div className="field-error" style={{color:'#c53030', fontSize:12, marginTop:6}}>Seleccione un cliente de la lista</div>
+              )}
+            </div>
           </div>
-        </label>
-        <label>Tipo
-          <select value={tipo} onChange={e=>setTipo(e.target.value)}>
-            <option value="recarga">Recarga</option>
-            <option value="primera">Primera</option>
-          </select>
-        </label>
-        <label>Status
-          <select value={status} onChange={e=>setStatus(e.target.value)}>
-            <option value="pendiente">Pendiente</option>
-            <option value="entregado">Entregado</option>
-            <option value="pagado">Pagado</option>
-          </select>
-        </label>
-        <label>Monto<input value={monto} onChange={e=>setMonto(e.target.value)} type="number" step="0.01" required/></label>
-        <label>Fecha
-          <input type="date" value={date} onChange={e=>setDate(e.target.value)} />
-          <div style={{fontSize:12,color:'#666'}}>Zona horaria: America/Lima (GMT-5). Formato: YYYY-MM-DD</div>
-        </label>
-        <button type="submit">Crear venta</button>
+
+          <div className="venta-field tipo">
+            <label>Tipo</label>
+            <select value={tipo} onChange={e=>setTipo(e.target.value)}>
+              <option value="recarga">Recarga</option>
+              <option value="primera">Primera</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="venta-row venta-row-2">
+          <div className="venta-field status">
+            <label>Status</label>
+            <select value={status} onChange={e=>setStatus(e.target.value)}>
+              <option value="pendiente">Pendiente</option>
+              <option value="entregado">Entregado</option>
+              <option value="pagado">Pagado</option>
+            </select>
+          </div>
+
+          <div className="venta-field monto">
+            <label>Monto (S/)</label>
+            <input value={monto} onChange={e=>setMonto(e.target.value)} type="number" step="0.1" required/>
+          </div>
+
+          <div className="venta-field fecha">
+            <label>Fecha</label>
+            <input type="date" value={date} onChange={e=>setDate(e.target.value)} />
+            <div style={{fontSize:12,color:'#666'}}>Zona horaria: America/Lima (GMT-5)</div>
+          </div>
+        </div>
+
+        <div className="button-submit-right">
+          <button
+            type="submit"
+            aria-disabled={!clienteId}
+            className={!clienteId ? 'btn-disabled' : ''}
+          >Crear venta</button>
+        </div>
       </form>
     </div>
   )

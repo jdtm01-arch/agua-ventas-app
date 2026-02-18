@@ -31,7 +31,7 @@ export default function Reports({ token, user }){
 
   return (
     <div className="reports">
-      <h3>Reportes</h3>
+      <h2>Reportes</h2>
 
       <div className="reports-controls">
         <label className="reports-control">
@@ -67,7 +67,7 @@ export default function Reports({ token, user }){
           </div>
 
           <div className="reports-series">
-            <h4>Series</h4>
+            <h3>Series</h3>
             <table className="series-table">
               <thead>
                 <tr>

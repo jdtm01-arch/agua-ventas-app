@@ -26,6 +26,7 @@ export function getClientes(token, params = {}){
 }
 export function createCliente(payload, token){ return request('/clientes', { method: 'POST', body: payload, token }) }
 export function updateCliente(id, payload, token){ return request(`/clientes/${id}`, { method: 'PUT', body: payload, token }) }
+export function deleteCliente(id, token){ return request(`/clientes/${id}`, { method: 'DELETE', token }) }
 export function getVentas(token, params = {}){
   const qs = new URLSearchParams(params).toString()
   return request(`/ventas${qs?('?'+qs):''}`, { method: 'GET', token })

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import api from '../api'
+import ConfirmModal from './ConfirmModal'
 
 export default function ClienteForm({ token }){
   const [clientes, setClientes] = useState([])
@@ -7,13 +8,19 @@ export default function ClienteForm({ token }){
   const [telefono, setTelefono] = useState('')
   const [direccion, setDireccion] = useState('')
   const [message, setMessage] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const messageRef = useRef(null)
+  const messageTimeoutRef = useRef(null)
   const [search, setSearch] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [selectedCliente, setSelectedCliente] = useState(null)
   const [editing, setEditing] = useState(false)
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false)
+  const [confirmClienteId, setConfirmClienteId] = useState(null)
   const blurTimeoutRef = useRef(null)
 
   async function load(){
+    setLoading(true)
     try{
       const res = await api.getClientes(token)
       // if resource returns { data: [...] }
@@ -21,6 +28,7 @@ export default function ClienteForm({ token }){
     }catch(e){
       console.error(e)
     }
+    setLoading(false)
   }
 
   useEffect(()=>{
@@ -41,13 +49,23 @@ export default function ClienteForm({ token }){
     e.preventDefault()
     try{
       const res = await api.createCliente({ nombre, telefono, direccion }, token)
-      setMessage('Cliente creado')
+      setMessage({ text: 'Cliente creado', type: 'success' })
       setNombre(''); setTelefono(''); setDireccion('')
+      setSuggestions([])
+      setSearch('')
       await load()
     }catch(err){
-      setMessage('Error creando cliente')
+      setMessage({ text: 'Error creando cliente', type: 'error' })
     }
   }
+
+  useEffect(()=>{
+    if (!message) return
+    if (messageRef.current) messageRef.current.focus()
+    if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current)
+    messageTimeoutRef.current = setTimeout(()=> setMessage(null), 5000)
+    return ()=>{ if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current) }
+  }, [message])
 
   async function startEdit(c){
     setSelectedCliente(c)
@@ -64,14 +82,14 @@ export default function ClienteForm({ token }){
     if (!selectedCliente) return
     try{
       await api.updateCliente(selectedCliente.id, { nombre, telefono, direccion }, token)
-      setMessage('Cliente actualizado')
+      setMessage({ text: 'Cliente actualizado', type: 'success' })
       setSelectedCliente(null)
       setEditing(false)
       setNombre(''); setTelefono(''); setDireccion('')
       await load()
     }catch(err){
       console.error(err)
-      setMessage('Error actualizando cliente')
+      setMessage({ text: 'Error actualizando cliente', type: 'error' })
     }
   }
 
@@ -81,16 +99,64 @@ export default function ClienteForm({ token }){
     setNombre(''); setTelefono(''); setDireccion('')
   }
 
+  async function handleDeleteCliente(){
+    if (!selectedCliente) return
+    const id = selectedCliente.id
+    setMessage(null)
+    // check if cliente has ventas
+    try{
+      const res = await api.getVentas(token, { cliente_id: id, per_page: 1 })
+      const total = Number(res.meta?.total) || (Array.isArray(res) ? (res.data || res).length : 0)
+      if (total > 0) {
+        setMessage({ text: 'No se puede eliminar un cliente que tiene ventas asociadas.', type: 'error' })
+        return
+      }
+    }catch(err){
+      // If API call fails, fallback to blocking deletion unless confirmed
+      console.error('Error checking ventas for cliente', err)
+    }
+    // open confirm modal
+    setConfirmClienteId(id)
+    setShowConfirmDelete(true)
+  }
+
+  async function confirmDeleteCliente(){
+    if (!confirmClienteId) return
+    setShowConfirmDelete(false)
+    setLoading(true)
+    try{
+      await api.deleteCliente(confirmClienteId, token)
+      setMessage({ text: 'Cliente eliminado', type: 'success' })
+      setSelectedCliente(null)
+      setEditing(false)
+      setNombre(''); setTelefono(''); setDireccion('')
+      await load()
+    }catch(err){
+      console.error(err)
+      setMessage({ text: err?.data?.message || 'Error eliminando cliente', type: 'error' })
+    }
+    setLoading(false)
+    setConfirmClienteId(null)
+  }
+
   return (
     <div style={{marginTop:16}}>
-      <h3>Clientes</h3>
-      {message && <div>{message}</div>}
+      <h2>Clientes</h2>
+      {message && (
+        <div ref={messageRef} tabIndex={-1} className={message.type === 'error' ? 'message-error' : 'message-success'}>
+          {message.text}
+        </div>
+      )}
+      {loading && <div className="loader" role="status" aria-label="Cargando clientes"></div>}
       <form onSubmit={editing ? saveEdit : submit}>
         <label>Nombre<input value={nombre} onChange={e=>setNombre(e.target.value)} required/></label>
         <label>Teléfono<input value={telefono} onChange={e=>setTelefono(e.target.value)} required/></label>
         <label>Dirección<input value={direccion} onChange={e=>setDireccion(e.target.value)} /></label>
-        <button type="submit">{editing ? 'Guardar cambios' : 'Crear cliente'}</button>
-        {editing && <button type="button" onClick={cancelEdit} style={{marginLeft:8}}>Cancelar</button>}
+        <div className="button-submit-right">
+          <button type="submit">{editing ? 'Guardar cambios' : 'Crear cliente'}</button>
+          {editing && <button type="button" onClick={cancelEdit}>Cancelar</button>}
+          {editing && <button type="button" onClick={handleDeleteCliente} style={{marginLeft:8}} className="action-btn danger" aria-label="Eliminar cliente"><i className="fi fi-sr-trash" aria-hidden style={{marginRight:6}}></i>Eliminar cliente</button>}
+        </div>
       </form>
 
       <div style={{marginTop:12}}>
@@ -122,6 +188,17 @@ export default function ClienteForm({ token }){
           )}
         </div>
       </div>
+        {showConfirmDelete && (
+          <ConfirmModal
+            open={showConfirmDelete}
+            title="Eliminar cliente"
+            message={`Confirmar eliminación del cliente ${selectedCliente?.nombre || ''} ?`}
+            confirmText="Eliminar"
+            cancelText="Cancelar"
+            onConfirm={confirmDeleteCliente}
+            onCancel={()=>{ setShowConfirmDelete(false); setConfirmClienteId(null) }}
+          />
+        )}
     </div>
   )
 }

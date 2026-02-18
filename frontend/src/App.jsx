@@ -10,11 +10,13 @@ import api from './api'
 import Reports from './components/Reports'
 import Header from './components/Header'
 import Footer from './components/Footer'
+import FloatingActions from './components/FloatingActions'
 
 export default function App(){
   const [token, setToken] = useState(localStorage.getItem('api_token') || null)
   const [user, setUser] = useState(null)
   const [view, setView] = useState(null)
+  const [isTransitioning, setIsTransitioning] = useState(false)
 
     React.useEffect(() => {
     async function fetchUser(){
@@ -55,22 +57,29 @@ export default function App(){
     setUser(null)
   }
 
+  function changeView(next){
+    if (next === view) return
+    setIsTransitioning(true)
+    setTimeout(()=>{
+      setView(next)
+      setIsTransitioning(false)
+    }, 180)
+  }
+
   return (
     <div>
-      <Header user={user} onLogout={onLogout} view={view || (user?.is_admin ? 'reportes' : 'ventas')} setView={setView} />
-      <div className="card">
+      {token && <Header user={user} onLogout={onLogout} view={view || (user?.is_admin ? 'reportes' : 'ventas')} setView={changeView} />}
+      <div className={!token ? '' : 'card'}>
         {!token ? (
           <Login onLogin={onLogin} />
         ) : (
-          <div>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-              <div style={{fontSize:14,color:'var(--muted)'}}>Usuario: {user?.email || 'conectado'}</div>
-            </div>
-            <Dashboard token={token} user={user} view={view || (user?.is_admin ? 'reportes' : 'ventas')} setView={setView} />
+          <div className={`view-wrapper ${isTransitioning? 'is-hidden':''}`}>
+            <Dashboard token={token} user={user} view={view || (user?.is_admin ? 'reportes' : 'ventas')} setView={changeView} />
           </div>
         )}
       </div>
-      <Footer />
+      {token && <Footer />}
+      {token && <FloatingActions setView={changeView} currentView={view || (user?.is_admin ? 'reportes' : 'ventas')} />}
     </div>
   )
 }
@@ -78,6 +87,12 @@ export default function App(){
 function Dashboard({ token, user, view, setView }){
   return (
     <div style={{marginTop:12}}>
+      {view === 'gastos' && (
+        <div style={{marginBottom:12}}>
+          <GastosForm token={token} user={user} onCreated={()=>window.dispatchEvent(new Event('gastos-updated'))} />
+        </div>
+      )}
+
       <div style={{border:'1px solid #eee', padding:12, borderRadius:6}}>
         {view === 'reportes' && <Reports token={token} user={user} />}
         {view === 'ventas' && (
@@ -88,11 +103,8 @@ function Dashboard({ token, user, view, setView }){
         )}
         {view === 'clientes' && <ClienteForm token={token} />}
         {view === 'gastos' && (
-          <div>
-            <GastosForm token={token} user={user} onCreated={()=>window.dispatchEvent(new Event('gastos-updated'))} />
-            <div style={{marginTop:12}}>
-              <GastosList token={token} onChanged={()=>window.dispatchEvent(new Event('gastos-updated'))} />
-            </div>
+          <div style={{marginTop:12}}>
+            <GastosList token={token} onChanged={()=>window.dispatchEvent(new Event('gastos-updated'))} />
           </div>
         )}
         {view === 'usuarios' && user?.is_admin && <AdminUsers token={token} />}

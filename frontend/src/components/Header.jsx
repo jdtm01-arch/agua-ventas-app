@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import logo from '../assets/logo.png'
 import { NOMBRE_EMPRESA, SLOGAN } from '../config'
+import ConfirmModal from './ConfirmModal'
 
 export default function Header({ user, onLogout, view, setView }){
   const [open, setOpen] = useState(false)
@@ -27,6 +28,16 @@ export default function Header({ user, onLogout, view, setView }){
     setOpen(false)
   }
 
+  function handleLogout(){
+    // open modal instead of immediate confirm
+    setShowLogoutConfirm(true)
+  }
+
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+
+  // Only show header if user is logged in
+  if (!user) return null
+
   return (
     <header className="app-header">
       <div className="container">
@@ -44,14 +55,28 @@ export default function Header({ user, onLogout, view, setView }){
             {items.map(i=> (
               <li key={i.key} className={`nav-item ${view===i.key? 'active':''}`} onClick={()=>handleSelect(i.key)}>{i.label}</li>
             ))}
+            {/* User info inside the mobile menu (hidden on large screens via CSS) */}
+            <li className="nav-user">
+              <div className="user-email">{user?.email || 'conectado'}</div>
+              <button className="btn-ghost" onClick={()=>{ setOpen(false); handleLogout(); }}>Logout</button>
+            </li>
           </ul>
         </nav>
 
         <div className="user-area">
           <div className="user-email">{user?.email || 'conectado'}</div>
-          <button className="btn-ghost" onClick={onLogout}>Logout</button>
+          <button className="btn-ghost" onClick={handleLogout}>Logout</button>
         </div>
       </div>
+      <ConfirmModal
+        open={showLogoutConfirm}
+        title="Cerrar sesión"
+        message="¿Estás seguro que deseas cerrar sesión?"
+        confirmText="Cerrar sesión"
+        cancelText="Cancelar"
+        onConfirm={()=>{ setShowLogoutConfirm(false); onLogout && onLogout() }}
+        onCancel={()=> setShowLogoutConfirm(false)}
+      />
     </header>
   )
 }
