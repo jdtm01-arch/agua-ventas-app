@@ -33,9 +33,16 @@ class VentaPolicy
     {
         // Admins can always update
         if (method_exists($user, 'hasRole') && $user->hasRole('admin')) return true;
-        // Otherwise only the creator can update if not paid
+        // Creators can update if:
+        // - status is not 'pagado', OR
+        // - status is 'pagado' AND age <= LIMITE_EDICION days
         if (method_exists($user, 'hasRole') && $user->hasRole('vendedor')) {
-            return $venta->created_by == $user->id && $venta->status !== 'pagado';
+            if ($venta->created_by != $user->id) return false;
+            if ($venta->status !== 'pagado') return true;
+            // If pagado, check age
+            $limiteEdicion = config('limits.edicion', 5);
+            $ageDays = now()->diffInDays($venta->created_at);
+            return $ageDays <= $limiteEdicion;
         }
         return false;
     }
@@ -44,8 +51,16 @@ class VentaPolicy
     {
         // Admins can always delete
         if (method_exists($user, 'hasRole') && $user->hasRole('admin')) return true;
+        // Creators can delete if:
+        // - status is not 'pagado', OR
+        // - status is 'pagado' AND age <= LIMITE_EDICION days
         if (method_exists($user, 'hasRole') && $user->hasRole('vendedor')) {
-            return $venta->created_by == $user->id && $venta->status !== 'pagado';
+            if ($venta->created_by != $user->id) return false;
+            if ($venta->status !== 'pagado') return true;
+            // If pagado, check age
+            $limiteEdicion = config('limits.edicion', 5);
+            $ageDays = now()->diffInDays($venta->created_at);
+            return $ageDays <= $limiteEdicion;
         }
         return false;
     }

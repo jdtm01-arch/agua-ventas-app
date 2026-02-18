@@ -1,20 +1,73 @@
-body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:0;padding:16px;background:#f7f7f8}
-.card{background:#fff;padding:16px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);max-width:720px;margin:8px auto}
+:root{
+	--color-primary: #0077B6;
+	--color-secondary: #00B4D8;
+	--color-accent: #023E8A;
+	--text-color: #111827;
+	--muted: #666666;
+	--card-bg: #ffffff;
+}
+
+*{box-sizing:border-box}
+
+body{
+  font-family: system-ui, 'Segoe UI', Roboto, Arial;
+  margin:0;
+  padding:0 16px 16px;
+  background:#f7f7f8;
+  color:var(--text-color);
+}
+
+/* Card */
+.card{
+  background:var(--card-bg);
+  padding:12px;
+  border-radius:8px;
+  box-shadow:0 1px 3px rgba(0,0,0,.08);
+  max-width:720px;
+  margin:8px auto;
+  width:100%;
+}
+.card *{max-width:100%;box-sizing:border-box}
+
 label{display:block;margin-top:8px}
-input,select,button,textarea{width:100%;padding:8px;margin-top:4px;border:1px solid #ddd;border-radius:4px}
 button{cursor:pointer}
 .row{display:flex;gap:8px}
 .row > *{flex:1}
 
-/* Reports styles (no inline styles) */
+/* Reports */
 .reports{margin-top:20px}
-.reports-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.reports-controls{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
 .reports-control{margin-right:8px}
+.reports-button{align-self:flex-end}
+.reports-period{flex:0 0 auto}
+.reports-dates{display:flex;gap:8px;flex:0 0 auto}
+.reports-dates .reports-control{margin-right:0}
+.reports-dates .reports-control input{width:100%}
+.reports-action{display:flex;align-items:flex-end}
 .reports-info{color:#666}
-.reports-button{padding:8px 12px}
 .reports-loading{margin-top:12px}
 .reports-body{margin-top:12px}
 .reports-cards{display:flex;gap:12px;flex-wrap:wrap}
+.reports-cards .card{max-width:unset;margin:0;width:auto;min-width:0;padding:8px;font-size:13px}
+.reports-cards .card strong{font-size:13px}
+.reports-cards .card .card-value{font-size:14px;margin-top:6px}
+@media (min-width:720px){
+  /* On wider screens, make 5 equal mini-cards per row */
+  .reports-cards .card{flex:0 0 calc((100% - 48px) / 5); /* 4 gaps of 12px = 48px */;box-sizing:border-box}
+}
+
+/* Series table styling overrides: align left and ensure currency spacing */
+.series-table td, .series-table th { text-align: left; padding:8px 10px }
+.series-table .align-right { text-align: left }
+.series-table td.align-right { text-align: left }
+
+/* series column coloring */
+.series-table td.recaudado{color:#1f7a34}
+.series-table td.por-cobrar{color:#8a4f18}
+.series-table td.gastos{color:#9b2c2c}
+/* gray zero values */
+.series-table td.is-zero{color:#9aa0a6 !important}
+
 .card{padding:12px;border-radius:6px;background:#fff;min-width:140px}
 .card.muted{background:#f3f4f6}
 .card.info{background:#eef7ff}
@@ -29,8 +82,351 @@ button{cursor:pointer}
 .align-right{text-align:right}
 .series-label{padding:6px 0}
 
-@media (max-width:720px){
-	.reports-cards{flex-direction:column}
-	.card{min-width:unset;width:100%}
-	.reports-controls{flex-direction:column;align-items:flex-start}
+/* Ventas table */
+.ventas-table{width:100%;border-collapse:collapse;margin-top:8px;background:#fff;border-radius:6px;overflow:hidden;font-size:13px}
+.ventas-table thead th{background:#f5f7fa;color:var(--text-color);text-align:left;padding:10px;border-bottom:1px solid rgba(0,0,0,0.06)}
+.ventas-table tbody td{padding:6px 10px;border-bottom:1px solid #f1f1f1}
+.ventas-table tbody tr:hover{background:rgba(2,126,250,0.03)}
+.ventas-table td em{color:var(--muted);font-style:normal;padding:2px 6px;border-radius:4px;background:#f7fafc}
+.ventas-table .badge-muted{display:inline-block;padding:4px 8px;background:#f3f4f6;border-radius:4px;font-size:13px;color:#333}
+.ventas-table button{margin-right:6px}
+
+/* locked badge (small lock icon) */
+.badge-locked{display:inline-flex;align-items:center;justify-content:center;padding:0;width:32px;height:32px;border-radius:50%;background:#f3f4f6;color:#6b7280;border:1px solid rgba(0,0,0,0.04);font-size:13px}
+.badge-locked i, .badge-locked svg{display:block;width:100%;height:100%;line-height:1;font-size:14px;align-items:center;justify-content:center;display:inline-flex}
+
+/* Header for ventas with right-aligned small filter */
+.ventas-header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.ventas-header .ventas-filter{margin-left:auto}
+.ventas-header .ventas-filter select{width:auto !important;display:inline-block;min-width:140px;max-width:220px;padding:6px;border-radius:6px;border:1px solid #ddd;background:#fff}
+.ventas-header .ventas-filter label{margin:0;font-size:13px;color:#333;margin-right:6px}
+
+/* status badges: use translucent backgrounds and colored text */
+.status-badge{display:inline-block;padding:6px 8px;border-radius:6px;font-weight:600;font-size:12px;color:var(--text-color);border:1px solid transparent}
+.status-pendiente{background:rgba(217,83,79,0.12);color:#9b2c2c;border-color:rgba(217,83,79,0.22)}
+.status-entregado{background:rgba(240,173,78,0.12);color:#8a4f18;border-color:rgba(240,173,78,0.22)}
+.status-pagado{background:rgba(40,167,69,0.12);color:#1f7a34;border-color:rgba(40,167,69,0.22)}
+
+/* action icon buttons */
+.action-btn{display:inline-flex;align-items:center;justify-content:center;gap:0;padding:0;width:32px;height:32px;border-radius:999px;border:0;background:var(--color-primary);color:#fff;cursor:pointer}
+.action-btn .action-icon{display:block}
+.action-btn i{color:inherit;font-size:14px;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:100%;height:100%}
+.action-btn.danger{background:#c53030}
+.action-btn:active{transform:translateY(1px)}
+
+/* Simple loader */
+.loader{width:40px;height:40px;border-radius:50%;border:4px solid rgba(0,0,0,0.08);border-top-color:var(--color-primary);animation:spin .9s linear infinite;margin:12px auto}
+.loader-inline{width:20px;height:20px;border-radius:50%;border:3px solid rgba(0,0,0,0.08);border-top-color:var(--color-primary);animation:spin .8s linear infinite;display:inline-block;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Header & Footer */
+.app-header{
+  background:linear-gradient(90deg,var(--color-secondary),#e6f6fb);
+  padding:8px 0; /* reduced header vertical padding */
+  border-bottom:1px solid rgba(0,0,0,0.06);
+  margin:0 -16px;
 }
+.app-header .container{max-width:960px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:12px;position:relative}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{width:56px;height:56px;object-fit:contain}
+.brand-title{font-size:20px;font-weight:700;color:var(--color-accent)}
+.brand-slogan{font-size:12px;color:var(--muted)}
+
+/* Header button hover effects */
+.nav-item{cursor:pointer;padding:8px 10px;border-radius:6px;color:var(--text-color);transition:background .18s ease,color .18s ease,transform .08s ease}
+.nav-item:hover{background:var(--color-primary);color:#fff;transform:translateY(-1px)}
+.btn-ghost{background:transparent;border:1px solid rgba(0,0,0,0.08);padding:6px 10px;border-radius:6px;transition:background .16s ease,border-color .16s ease,transform .08s ease}
+.btn-ghost:hover{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.12);transform:translateY(-1px)}
+
+/* Primary button for modals and form actions */
+.btn-primary{background:var(--color-primary);color:#fff;border:0;padding:8px 12px;border-radius:6px;cursor:pointer;transition:background .12s ease,transform .06s ease}
+.btn-primary:hover{background:var(--color-accent);transform:translateY(-1px)}
+.btn-danger{background:#c53030;color:#fff;border:0}
+
+/* Modal footer buttons sizing */
+.modal-footer .btn-ghost, .modal-footer .btn-primary{min-width:100px}
+.hamburger{display:none;background:none;border:0;font-size:20px;padding:6px 8px;cursor:pointer;transition:background .12s ease,border-radius .12s ease}
+.hamburger:hover{background:rgba(0,0,0,0.03);border-radius:6px}
+
+/* Make headings use brand color */
+h1,h2{color:var(--color-accent)}
+
+.app-footer{margin-top:24px;padding:12px 0;background:#f1f5f9;border-top:1px solid rgba(0,0,0,0.04)}
+.app-footer .container{max-width:960px;margin:0 auto;padding:0 16px;text-align:center;color:var(--muted)}
+
+
+/* nav styles */
+.nav{margin-left:auto;margin-right:16px}
+.hamburger{display:none}
+.nav-menu{display:flex;gap:8px;list-style:none;margin:0;padding:0}
+.nav-item{cursor:pointer;padding:8px 10px;border-radius:6px;color:var(--text-color)}
+.nav-item.active{background:var(--color-primary);color:#fff}
+.user-area{display:flex;align-items:center;gap:8px}
+.btn-ghost{background:transparent;border:1px solid rgba(0,0,0,0.08);padding:6px 10px;border-radius:6px}
+
+/* Mobile-only user entry inside the nav menu */
+.nav-user{display:none;align-items:center;justify-content:flex-end;gap:8px;padding:8px 10px;border-top:1px solid rgba(0,0,0,0.04)}
+.nav-user .user-email{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-user .btn-ghost{padding:6px 8px;font-size:13px}
+
+
+/* Target smaller screens (phone width <= 430px) */
+  /* Auth / login page */
+.auth-page{position:fixed;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;padding:16px;background:transparent;z-index:1000}
+.auth-page ~ .app-header{display:none !important}
+.auth-page ~ .app-footer{display:none !important}
+.app-header ~ .auth-page ~ .app-footer{display:none !important}
+.auth-page .card{max-width:280px !important;width:280px !important;padding:16px !important;margin:0 !important;box-sizing:border-box !important}
+.auth-page .auth-card{max-width:280px !important;width:280px !important;padding:16px !important;border-radius:8px;margin:0 !important;box-sizing:border-box !important}
+.auth-card{max-width:280px !important;width:280px !important;padding:16px !important;margin:0 !important}
+.auth-card h2{font-size:18px;margin:0 0 6px;text-align:center;color:var(--color-accent)}
+.auth-subtitle{font-size:13px;color:var(--muted);text-align:center;margin:0 0 16px;line-height:1.4}
+.auth-error{background:#ffeef0;color:#c53030;padding:8px;border-radius:4px;margin-bottom:12px;font-size:13px;text-align:center}
+.auth-card label{font-size:13px;margin-top:12px;display:block;color:var(--text-color);font-weight:500}
+.auth-card input{padding:8px;font-size:13px;width:100% !important;box-sizing:border-box !important;border:1px solid #ddd;border-radius:4px;margin-top:4px}
+.auth-card .row{margin-top:16px;display:flex}
+.auth-card .row > *{flex:1}
+.auth-card button{font-size:14px;padding:10px;width:100% !important;margin-top:0 !important}
+.auth-logo{display:block;width:80px;height:80px;object-fit:contain;margin:0 auto 12px}
+/* Form controls inside cards */
+input,select,textarea{width:100%;padding:8px;margin-top:4px;border:1px solid #ddd;border-radius:4px}
+button{cursor:pointer;padding:6px 10px;border-radius:4px;border:1px solid #ddd;background:#fff}
+
+/* Card headings */
+.card h2{font-size:20px;margin:0 0 12px;color:var(--color-accent)}
+
+/* Make header allow overflow so absolute user-area fits */
+.app-header{overflow:visible}
+
+/* View transition wrapper */
+.view-wrapper{transition:opacity .18s ease, transform .18s ease}
+.view-wrapper.is-hidden{opacity:0;transform:translateY(6px)}
+.view-wrapper{opacity:1;transform:translateY(0)}
+
+/* Generic message styles */
+.message-success{background:linear-gradient(90deg,#e6f9ff,#eaf7ff);border:1px solid #bfeaf6;color:#045d7a;padding:10px;border-radius:6px;margin:8px 0}
+.message-success::before{content:"\2713 ";font-weight:700;margin-right:6px}
+.message-error{background:#fff1f2;border:1px solid #f5c2c7;color:#9b2c2c;padding:10px;border-radius:6px;margin:8px 0}
+.message-error::before{content:"\26A0 ";margin-right:6px}
+
+/* small inline field error */
+.field-error{color:#c53030;font-size:13px;margin-top:6px}
+
+/* Form buttons styled like header (primary) */
+form button, .card button{background:var(--color-primary);color:#fff;border:0;padding:10px 14px;border-radius:6px;font-size:15px;cursor:pointer;transition:background .12s ease,transform .06s ease}
+form button:hover, .card button:hover{background:var(--color-accent);transform:translateY(-1px)}
+
+/* Small ghost-style button kept for logout */
+.btn-ghost{background:transparent;border:1px solid rgba(0,0,0,0.08);padding:4px 8px;border-radius:6px}
+
+/* Modal classes to replace inline styles */
+.modal-backdrop{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;z-index:50}
+.modal-backdrop{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.0);display:flex;align-items:center;justify-content:center;z-index:50;transition:background .18s ease}
+.modal-backdrop.open{background:rgba(0,0,0,0.32)}
+.modal-dialog{background:#fff;padding:16px;border-radius:6px;min-width:280px;max-width:92%;box-shadow:0 6px 24px rgba(0,0,0,0.15);transform:translateY(8px);opacity:0;transition:opacity .18s ease, transform .18s ease}
+.modal-dialog.open{transform:translateY(0);opacity:1}
+.modal-dialog:focus{outline:0}
+.modal-id{color:var(--color-primary);font-weight:700;margin-left:6px}
+/* Confirm modal title uses primary color */
+.confirm-title{color:var(--text-color);margin:0 0 6px 0}
+
+/* Small icon next to confirm title */
+.confirm-icon{display:inline-block;vertical-align:middle;margin-right:8px;color:#F6AD55;font-size:18px}
+.confirm-icon i{display:inline-block;font-size:18px;line-height:1}
+
+.confirm-icon svg{display:block}
+
+/* Confirm modal message spacing */
+.modal-message{margin-top:8px;margin-bottom:12px}
+
+/* Reduce spacing between modal title and first form row */
+.modal-dialog > h3{margin:0 0 6px}
+.modal-dialog .mb-8{margin-top:6px;margin-bottom:6px}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+
+/* Utility */
+.text-muted{color:var(--muted)}
+.text-danger{color:#c53030}
+.mb-8{margin-bottom:8px}
+.flex-row{display:flex;gap:8px;align-items:center}
+
+/* Right-aligned submit buttons with spacing */
+.button-submit-right{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+form > button[type="submit"]{margin-top:16px}
+
+/* Pagination buttons (less prominent) */
+.ventas-pagination .pagination-btn{padding:6px 10px;font-size:13px;border-radius:6px;border:1px solid rgba(0,0,0,0.08);background:transparent;color:var(--color-primary);box-shadow:none;min-width:80px}
+.ventas-pagination .pagination-btn:disabled{opacity:0.5;cursor:not-allowed}
+
+@media (max-width:720px){
+  .ventas-pagination .pagination-btn{padding:5px 8px;font-size:12px;min-width:64px}
+}
+
+/* Venta form responsive layout */
+.venta-form .venta-row{display:flex;flex-direction:column;gap:12px;margin-bottom:6px}
+.venta-form .venta-field{display:flex;flex-direction:column}
+.venta-form .suggestions-list{position:absolute; z-index:20; background:#fff; border:1px solid #ddd; list-style:none; padding:6px; margin:0; width:100%; max-height:300px; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,0.15)}
+.venta-form .suggestion-item{padding:10px 8px; cursor:pointer; border-bottom:1px solid #eee}
+
+@media (min-width:901px){
+  .venta-form .venta-row{flex-direction:row}
+  .venta-form .venta-row-1 .cliente{flex:2}
+  .venta-form .venta-row-1 .tipo{flex:1}
+  .venta-form .venta-row-2 > *{flex:1}
+  .fab-container{display:none}
+}
+
+/* Make report controls span the full width of the reports card on large screens */
+@media (min-width:901px){
+  .reports-controls{flex-wrap:nowrap;gap:12px;align-items:center}
+  .reports-controls > *{flex:1 1 0;min-width:0}
+  .reports-period{flex:1 1 0}
+  /* dates group holds two controls (Desde/Hasta) — give it two flex units so each date gets equal share */
+  .reports-dates{display:flex;gap:12px;flex:2 1 0}
+  .reports-dates .reports-control{flex:1 1 0;min-width:0}
+  .reports-action{flex:1 1 0;display:flex;align-items:center;justify-content:flex-end}
+  /* keep action button visually balanced; allow it to fill its column but constrain max width */
+  .reports-action .reports-button{width:100%;max-width:180px}
+}
+
+/* Consolidated responsive rules (ordered): 430 → 600 → 720 → 900 → 901+ */
+@media (max-width:430px){
+  .cliente-search{ width: 100%; max-width: 100%; }
+  .cliente-search-input{ padding:12px 10px; }
+  /* Stack Nombre and Teléfono vertically on small screens with standard gap */
+  .cliente-row{ flex-direction:column; gap:12px; }
+  .cliente-row > label{ width:100%; margin-top:0; }
+  .cliente-row > label input{ width:100%; }
+  .app-header .container{padding:0 10px;gap:8px}
+  .brand{align-items:flex-start;gap:8px}
+  .brand img{width:48px;height:48px}
+  .brand-title{font-size:16px}
+  .brand-slogan{font-size:11px}
+  .hamburger{display:block;position:absolute;right:10px;top:50%;transform:translateY(-50%)}
+  .nav{margin-left:0;margin-right:0}
+  .user-area{position:absolute;right:10px;bottom:10px;display:flex;gap:8px;align-items:center;background:transparent;padding:4px;max-width:160px;overflow:hidden}
+  .user-area .user-email{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .user-area .btn-ghost{padding:4px 8px;font-size:12px}
+  .card{margin:8px 4px}
+  .user-area{display:none}
+}
+
+/* Make form buttons full-width on very small screens (<450px) */
+@media (max-width:450px){
+  /* make form/card buttons full-width but avoid changing icon-only action buttons */
+  form button:not(.action-btn), .card button:not(.action-btn){width:100%;display:block;padding:12px 14px;border-radius:6px}
+  /* ensure submit gap */
+  .button-submit-right{flex-direction:column;align-items:stretch}
+  .button-submit-right > *{width:100%}
+  /* keep action buttons small inside cards on mobile */
+  .card .action-btn{width:32px;height:32px;display:inline-flex;padding:0}
+
+/* Ensure lock icon matches action button sizing when shown inline */
+.venta-card .action-muted i, .venta-card .action-muted .fi { width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:14px; margin-right:6px }
+.venta-card .badge-locked i { width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:14px }
+
+  /* make cliente search slightly larger on small screens */
+  .cliente-search{width:220px !important; max-width:55% !important}
+  .cliente-search-input{padding:10px !important}
+  /* Stack fields in gastos card: match standard gap and labels */
+  .gasto-row{flex-direction:column;gap:12px}
+  .gasto-row > label{width:100%;margin-top:0}
+  .gasto-row > label input, .gasto-row > label select{width:100%}
+  /* On mobile, gasto-small fields take full width */
+  .gasto-row .gasto-small{width:100%}
+}
+
+/* On larger screens, gasto-small fields have constrained width */
+@media (min-width:451px){
+  .gasto-row .gasto-small{width:160px}
+}
+
+/* Ensure ventas pagination buttons stay side-by-side on small screens and remain readable */
+.ventas-pagination{flex-wrap:nowrap}
+.ventas-pagination > div{display:flex;gap:8px;align-items:center}
+.ventas-pagination .pagination-btn{width:auto !important;display:inline-block;padding:6px 10px;font-size:13px;border-radius:6px;border:1px solid rgba(0,0,0,0.06);background:transparent;color:var(--color-accent);font-weight:600;box-shadow:none}
+.ventas-pagination .pagination-btn:disabled{opacity:0.45}
+@media (max-width:450px){
+  .ventas-pagination .pagination-btn{padding:6px 8px;font-size:13px;min-width:64px}
+}
+
+/* Ensure hover state uses accent background and white text for readability */
+.ventas-pagination .pagination-btn:hover:not(:disabled){
+  background:var(--color-accent);
+  color:#fff;
+  border-color:transparent;
+}
+
+@media (max-width:600px){
+  .brand img{width:48px;height:48px}
+  .brand-title{font-size:18px}
+}
+
+@media (max-width:720px){
+  /* hide Tipo and Monto on small screens (columns 4 & 5 after adding Fecha) */
+  .ventas-table thead th:nth-child(4), .ventas-table thead th:nth-child(5){display:none}
+  .ventas-table tbody td:nth-child(4), .ventas-table tbody td:nth-child(5){display:none}
+
+  /* Small-screen mini cards for ventas */
+  .ventas-table{display:none}
+  .ventas-header .ventas-filter select{min-width:110px}
+  .ventas-cards{display:block;margin-top:8px}
+  .venta-card{background:#fff;border:1px solid #eee;padding:10px;border-radius:8px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.03)}
+  .venta-card .venta-row{font-size:13px;color:var(--text-color);margin:6px 0}
+  .venta-card .venta-actions{display:flex;gap:8px;justify-content:flex-end;border-top:1px dashed #eee;padding-top:8px;margin-top:8px}
+  .venta-card .action-link{color:var(--color-accent);cursor:pointer;text-decoration:underline;font-weight:600}
+  .venta-card .action-muted{color:#999}
+  .venta-card .action-sep{color:#ccc;margin:0 6px}
+  .venta-card .action-sep{display:none}
+
+  /* Reports adjustments */
+  .reports-cards{flex-direction:column}
+  .card{min-width:unset;width:100%}
+  .reports-controls{flex-direction:column;align-items:flex-start}
+  .reports-period{width:100%}
+  .reports-dates{width:100%;display:flex;gap:8px}
+  .reports-dates .reports-control{flex:1}
+  .reports-action{width:100%}
+  .reports-action .reports-button{width:100%}
+}
+
+@media (max-width:900px){
+  .nav-menu{position:absolute;top:64px;left:0;right:0;background:linear-gradient(180deg,#fff, #f9fdff);flex-direction:column;padding:8px 12px;max-height:0;overflow:hidden;opacity:0;transition:max-height .28s ease,opacity .22s ease,transform .22s ease;transform:translateY(-6px);z-index:9999}
+  .nav-menu.open{max-height:420px;opacity:1;transform:translateY(0);z-index:9999}
+  /* show the user entry inside the opened menu */
+  .nav-menu .nav-user{display:flex}
+  .hamburger{display:block}
+  .nav{margin-right:8px}
+  /* hide the separate user-area when the hamburger/menu is used */
+  .user-area{display:none}
+
+  /* Floating action buttons: show starting at the same breakpoint as the hamburger (<=900px) */
+  .fab-container{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom));display:flex;gap:12px;z-index:1200}
+  .fab-button{width:52px;height:52px;border-radius:999px;border:0;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,0.12);cursor:pointer;transition:transform .12s ease,box-shadow .12s ease}
+  .fab-button svg{display:block}
+  .fab-button.fab-clientes{background:var(--color-accent)}
+  .fab-button.fab-ventas{background:#1ca25f}
+  .fab-button.fab-gastos{background:#d9534f}
+  .fab-dollar{color:#fff;font-size:18px;line-height:1;font-weight:700}
+  /* ensure icons/texts are centered */
+  .fab-button .fab-plus, .fab-button .fab-dollar, .fab-button svg{display:inline-block;vertical-align:middle}
+  .fab-button i{color:#fff;font-size:26px;line-height:1;display:inline-block}
+  .fab-plus{color:#fff;font-size:26px;line-height:1;font-weight:700}
+  .fab-item{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .fab-label{font-size:12px;color:var(--text-color);opacity:0.95;background:rgba(255,255,255,0.92);padding:4px 8px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.06);white-space:nowrap}
+  .fab-item.active .fab-label{font-weight:700;color:var(--color-accent);background:#fff}
+  .fab-button.active{transform:translateY(-4px) scale(1.05);box-shadow:0 10px 30px rgba(0,0,0,0.18)}
+  .fab-button:active{transform:translateY(1px)}
+}
+
+@media (min-width:901px){
+  .venta-form .venta-row{flex-direction:row}
+  .venta-form .venta-row-1 .cliente{flex:2}
+  .venta-form .venta-row-1 .tipo{flex:1}
+  .venta-form .venta-row-2 > *{flex:1}
+  .fab-container{display:none}
+}
+
+
+

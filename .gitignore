@@ -24,3 +24,5 @@ Homestead.yaml
 Thumbs.db
 /docs
 /frontend/node_modules
+cypress/videos/
+cypress/screenshots/

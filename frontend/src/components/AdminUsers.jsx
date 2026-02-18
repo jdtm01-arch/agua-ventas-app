@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import api from '../api'
 
 export default function AdminUsers({ token }){
@@ -12,24 +12,40 @@ export default function AdminUsers({ token }){
     try{
       const payload = { name, email, password }
       const res = await api.createUser(payload, token)
-      setMessage('Usuario creado: ' + (res.user?.email || email))
+      setMessage({ text: 'Usuario creado: ' + (res.user?.email || email), type: 'success' })
       setName('')
       setEmail('')
       setPassword('')
     }catch(err){
-      setMessage('Error: ' + (err.data?.message || JSON.stringify(err.data?.errors) || ''))
+      setMessage({ text: 'Error: ' + (err.data?.message || JSON.stringify(err.data?.errors) || ''), type: 'error' })
     }
   }
 
+  const messageRef = useRef(null)
+  const messageTimeoutRef = useRef(null)
+  useEffect(()=>{
+    if (!message) return
+    if (messageRef.current) messageRef.current.focus()
+    if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current)
+    messageTimeoutRef.current = setTimeout(()=> setMessage(null), 5000)
+    return ()=>{ if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current) }
+  }, [message])
+
   return (
-    <div style={{borderTop:'1px solid #ddd', paddingTop:12, marginTop:12}}>
-      <h3>Admin: crear vendedor</h3>
-      {message && <div style={{color:'green'}}>{message}</div>}
+    <div style={{paddingTop:12, marginTop:12}}>
+      <h2>Admin: crear vendedor</h2>
+      {message && (
+        <div ref={messageRef} tabIndex={-1} className={message.type === 'error' ? 'message-error' : 'message-success'}>
+          {message.text}
+        </div>
+      )}
       <form onSubmit={submit}>
         <label>Nombre<input value={name} onChange={e=>setName(e.target.value)} required/></label>
         <label>Email<input value={email} onChange={e=>setEmail(e.target.value)} type="email" required/></label>
         <label>Contraseña<input value={password} onChange={e=>setPassword(e.target.value)} type="password" required/></label>
-        <div><button type="submit">Crear vendedor</button></div>
+        <div className="button-submit-right">
+          <button type="submit">Crear vendedor</button>
+        </div>
       </form>
     </div>
   )

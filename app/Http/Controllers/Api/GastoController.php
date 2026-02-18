@@ -57,13 +57,15 @@ class GastoController extends Controller
         $isAdmin = $user->hasRole('admin');
         $isOwner = $gasto->user_id === $user->id;
 
-        // Vendedor puede editar solo si es dueño y gasto no mayor a 1 mes
+        // Vendedor puede editar solo si es dueño y gasto no mayor a LIMITE_EDICION días de antigüedad
         if (! $isAdmin) {
             if (! $isOwner) {
                 return response()->json(['message' => 'No autorizado'], 403);
             }
-            if ($gasto->created_at->lt(now()->subMonth())) {
-                return response()->json(['message' => 'No puede editar gastos con más de un mes de antigüedad'], 403);
+            $limiteEdicion = config('limits.edicion', 5);
+            $ageDays = now()->diffInDays($gasto->created_at);
+            if ($ageDays > $limiteEdicion) {
+                return response()->json(['message' => 'No puede editar gastos con más de ' . $limiteEdicion . ' días de antigüedad'], 403);
             }
         }
 
@@ -87,7 +89,9 @@ class GastoController extends Controller
 
         if (! $isAdmin) {
             if (! $isOwner) return response()->json(['message' => 'No autorizado'], 403);
-            if ($gasto->created_at->lt(now()->subMonth())) return response()->json(['message' => 'No puede eliminar gastos con más de un mes de antigüedad'], 403);
+            $limiteEdicion = config('limits.edicion', 5);
+            $ageDays = now()->diffInDays($gasto->created_at);
+            if ($ageDays > $limiteEdicion) return response()->json(['message' => 'No puede eliminar gastos con más de ' . $limiteEdicion . ' días de antigüedad'], 403);
         }
 
         // Require explicit confirmation from the client
