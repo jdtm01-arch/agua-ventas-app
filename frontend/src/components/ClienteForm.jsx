@@ -6,6 +6,7 @@ export default function ClienteForm({ token }){
   const [clienteVentas, setClienteVentas] = useState([])
   const [ventasLoading, setVentasLoading] = useState(false)
   const ventasPerPage = 20
+  const [isSmall, setIsSmall] = useState(false)
   const [clientes, setClientes] = useState([])
   const [nombre, setNombre] = useState('')
   const [telefono, setTelefono] = useState('')
@@ -160,6 +161,19 @@ export default function ClienteForm({ token }){
     window.addEventListener('ventas-updated', onVentasUpdated)
     return ()=> window.removeEventListener('ventas-updated', onVentasUpdated)
   }, [selectedCliente])
+
+  // detect small screens for card layout (match VentasList behavior)
+  useEffect(()=>{
+    const mq = window.matchMedia('(max-width:720px)')
+    const onMq = e => setIsSmall(e.matches)
+    setIsSmall(mq.matches)
+    mq.addEventListener?.('change', onMq)
+    if (!mq.addEventListener) mq.addListener(onMq)
+    return ()=>{
+      mq.removeEventListener?.('change', onMq)
+      if (!mq.removeEventListener) mq.removeListener(onMq)
+    }
+  }, [])
 
   async function saveEdit(e){
     e.preventDefault()
@@ -367,7 +381,7 @@ export default function ClienteForm({ token }){
             {!ventasLoading && clienteVentas.length === 0 && (
               <div style={{marginTop:8}}>No hay ventas asociadas a este cliente.</div>
             )}
-            {!ventasLoading && clienteVentas.length > 0 && (
+            {!ventasLoading && clienteVentas.length > 0 && !isSmall && (
               <div style={{overflowX:'auto', marginTop:8}}>
                 <table className="ventas-table">
                   <thead>
@@ -393,6 +407,25 @@ export default function ClienteForm({ token }){
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+            {/* Mobile cards layout */}
+            {!ventasLoading && clienteVentas.length > 0 && isSmall && (
+              <div className="ventas-cards" style={{marginTop:8}}>
+                {clienteVentas.map(v => {
+                  const tipoText = String(v.tipo_venta || v.tipo || '').toUpperCase()
+                  const statusText = String(v.status || '').toUpperCase()
+                  const statusClass = `status-${String(v.status||'').toLowerCase()}`
+                  return (
+                    <div className="venta-card" key={v.id}>
+                      <div className="venta-row"><strong>ID:</strong> {v.id}</div>
+                      <div className="venta-row"><strong>Fecha:</strong> {formatDate(v.created_at || v.createdAt || v.date)}</div>
+                      <div className="venta-row"><strong>Tipo:</strong> {tipoText}</div>
+                      <div className="venta-row"><strong>Monto (S/):</strong> {formatCurrency(v.monto)}</div>
+                      <div className="venta-row"><strong>Status:</strong> <span className={`status-badge ${statusClass}`}>{statusText}</span></div>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
