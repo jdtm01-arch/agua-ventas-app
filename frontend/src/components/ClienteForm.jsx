@@ -3,6 +3,9 @@ import api from '../api'
 import ConfirmModal from './ConfirmModal'
 
 export default function ClienteForm({ token }){
+  const [clienteVentas, setClienteVentas] = useState([])
+  const [ventasLoading, setVentasLoading] = useState(false)
+  const ventasPerPage = 20
   const [clientes, setClientes] = useState([])
   const [nombre, setNombre] = useState('')
   const [telefono, setTelefono] = useState('')
@@ -132,8 +135,31 @@ export default function ClienteForm({ token }){
       const res = await api.getVentas(token, { cliente_id: c.id, per_page: 1 })
       const total = Number(res.meta?.total) || (Array.isArray(res) ? (res.data || res).length : 0)
       setSelectedHasVentas(total > 0)
+    
+      // Load ventas history for selected cliente
+      loadClienteVentas(c.id)
     }catch(e){ console.error('error checking ventas for selected cliente', e); setSelectedHasVentas(false) }
   }
+
+  async function loadClienteVentas(clienteId){
+    if (!clienteId) { setClienteVentas([]); return }
+    setVentasLoading(true)
+    try{
+      const res = await api.getVentas(token, { cliente_id: clienteId, per_page: ventasPerPage })
+      const items = res.data || res.ventas || res || []
+      // sort by date desc if possible
+      items.sort((a,b)=>{ const da = new Date(a.created_at||a.createdAt||a.date||null); const db = new Date(b.created_at||b.createdAt||b.date||null); if (isNaN(da)) return 1; if (isNaN(db)) return -1; return db.getTime() - da.getTime() })
+      setClienteVentas(items)
+    }catch(e){ console.error('error loading ventas for cliente', e); setClienteVentas([]) }
+    setVentasLoading(false)
+  }
+
+  // reload ventas when global ventas are updated
+  useEffect(()=>{
+    function onVentasUpdated(){ if (selectedCliente) loadClienteVentas(selectedCliente.id) }
+    window.addEventListener('ventas-updated', onVentasUpdated)
+    return ()=> window.removeEventListener('ventas-updated', onVentasUpdated)
+  }, [selectedCliente])
 
   async function saveEdit(e){
     e.preventDefault()
@@ -333,6 +359,57 @@ export default function ClienteForm({ token }){
               onCancel={()=>{ setShowCreateConfirm(false) }}
             />
           )}
+        {/* Historial de ventas para el cliente seleccionado */}
+        {selectedCliente && (
+          <div style={{marginTop:18}}>
+            <h3 style={{margin:'0 0 8px 0'}}>Historial de ventas — {selectedCliente.nombre}</h3>
+            {ventasLoading && <div className="loader" style={{marginTop:8}} role="status" aria-label="Cargando ventas del cliente"></div>}
+            {!ventasLoading && clienteVentas.length === 0 && (
+              <div style={{marginTop:8}}>No hay ventas asociadas a este cliente.</div>
+            )}
+            {!ventasLoading && clienteVentas.length > 0 && (
+              <div style={{overflowX:'auto', marginTop:8}}>
+                <table className="ventas-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Fecha</th>
+                      <th>Tipo</th>
+                      <th>Monto (S/)</th>
+                      <th>Status</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {clienteVentas.map(v => (
+                      <tr key={v.id}>
+                        <td>{v.id}</td>
+                        <td>{formatDate(v.created_at || v.createdAt || v.date)}</td>
+                        <td>{String(v.tipo_venta || v.tipo || '').toUpperCase()}</td>
+                        <td>{formatCurrency(v.monto)}</td>
+                        <td><span className={`status-badge ${'status-'+String(v.status||'').toLowerCase()}`}>{String(v.status||'').toUpperCase()}</span></td>
+                        <td></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
     </div>
   )
+}
+
+function formatDate(iso){
+  if (!iso) return ''
+  const s = String(iso)
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})/)
+  if (m){ const [y,mo,d] = m[1].split('-'); return `${d}/${mo}/${y}` }
+  try { return new Date(iso).toLocaleDateString() } catch(e){ return iso }
+}
+
+function formatCurrency(v){
+  const n = Number(v) || 0
+  try{ return n.toLocaleString('es-PE', { style: 'currency', currency: 'PEN', minimumFractionDigits: 2 }) }catch(e){ return `S/ ${n.toFixed(2)}` }
 }

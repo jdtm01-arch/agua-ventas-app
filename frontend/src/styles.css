@@ -115,6 +115,26 @@ button{cursor:pointer}
 .action-btn.danger{background:#c53030}
 .action-btn:active{transform:translateY(1px)}
 
+/* Ensure the actions column keeps a fixed width and buttons don't wrap */
+.ventas-table thead th:nth-child(6), .ventas-table tbody td:nth-child(6) {
+  width: 110px;
+  min-width: 110px;
+  max-width: 110px;
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* Keep action buttons inline and predictable spacing */
+.ventas-table td .action-btn{margin-left:6px;margin-right:0}
+
+/* Truncate long descriptions so they don't push other columns */
+.ventas-table tbody td:nth-child(5) {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Simple loader */
 .loader{width:40px;height:40px;border-radius:50%;border:4px solid rgba(0,0,0,0.08);border-top-color:var(--color-primary);animation:spin .9s linear infinite;margin:12px auto}
 .loader-inline{width:20px;height:20px;border-radius:50%;border:3px solid rgba(0,0,0,0.08);border-top-color:var(--color-primary);animation:spin .8s linear infinite;display:inline-block;vertical-align:middle}
