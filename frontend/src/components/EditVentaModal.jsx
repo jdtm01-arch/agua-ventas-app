@@ -8,6 +8,7 @@ export default function EditVentaModal({ token, venta, onClose, onSaved }){
   const [status, setStatus] = useState(venta?.status ?? 'pendiente')
   const [tipo, setTipo] = useState(venta?.tipo_venta ?? 'recarga')
   const [date, setDate] = useState(venta?.created_at ? new Date(venta.created_at).toISOString().slice(0,10) : new Date().toISOString().slice(0,10))
+  const [descripcion, setDescripcion] = useState(venta?.descripcion ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
@@ -15,6 +16,7 @@ export default function EditVentaModal({ token, venta, onClose, onSaved }){
     setMonto(venta?.monto ?? '')
     setStatus(venta?.status ?? 'pendiente')
     setTipo(venta?.tipo_venta ?? 'recarga')
+    setDescripcion(venta?.descripcion ?? '')
     function extractDatePart(ts){
       if (!ts) return new Date().toISOString().slice(0,10)
       const m = String(ts).match(/^(\d{4}-\d{2}-\d{2})/)
@@ -43,6 +45,7 @@ export default function EditVentaModal({ token, venta, onClose, onSaved }){
       const updates = {}
       if (Number(monto) !== Number(venta.monto)) updates.monto = Number(monto)
       if (tipo !== venta.tipo_venta) updates.tipo_venta = tipo
+      if (descripcion !== (venta.descripcion ?? '')) updates.descripcion = descripcion
       
       // Validar formato de fecha (YYYY-MM-DD)
       const re = /^\d{4}-\d{2}-\d{2}$/
@@ -126,6 +129,22 @@ export default function EditVentaModal({ token, venta, onClose, onSaved }){
               <input type="date" placeholder="YYYY-MM-DD" value={date} onChange={e=>setDate(e.target.value)} />
             </label>
             <div style={{fontSize:12,color:'#666'}}>Zona horaria: America/Lima (GMT-5)</div>
+          </div>
+          <div className="mb-8">
+            <label>Descripción (máximo 500 caracteres)
+              <textarea 
+                placeholder="Descripción de la venta (opcional)"
+                value={descripcion}
+                onChange={e=>{
+                  let v = e.target.value
+                  if (v.length <= 500) setDescripcion(v)
+                  else setDescripcion(v.slice(0, 500))
+                }}
+                maxLength={500}
+                style={{minHeight:'80px', resize:'vertical'}}
+              />
+              <div style={{fontSize:12, color:'#666', marginTop:4}}>{descripcion.length}/500</div>
+            </label>
           </div>
           <div className="modal-footer">
             <button type="button" onClick={onClose} disabled={saving}>Cancelar</button>

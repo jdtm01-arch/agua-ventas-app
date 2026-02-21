@@ -1,11 +1,15 @@
 import React, { useEffect, useState, useRef } from 'react'
+import { PAGINACION } from '../config'
 import api from '../api'
 import ConfirmModal from './ConfirmModal'
 
 export default function ClienteForm({ token }){
   const [clienteVentas, setClienteVentas] = useState([])
   const [ventasLoading, setVentasLoading] = useState(false)
-  const ventasPerPage = 20
+  const ventasPerPage = Number(PAGINACION) || 20
+  const [clienteVentasPage, setClienteVentasPage] = useState(1)
+  const [clienteVentasHasNext, setClienteVentasHasNext] = useState(false)
+  const [clienteVentasTotal, setClienteVentasTotal] = useState(0)
   const [isSmall, setIsSmall] = useState(false)
   const [clientes, setClientes] = useState([])
   const [nombre, setNombre] = useState('')
@@ -80,9 +84,9 @@ export default function ClienteForm({ token }){
       setNameError('El nombre no puede exceder 50 caracteres')
       return
     }
-    // telefono validation (optional)
-    if (telefono && !/^\+?\d{1,14}$/.test(telefono)){
-      setTelefonoError('Teléfono inválido (solo números y +, máximo 14 caracteres)')
+    // telefono validation (required)
+    if (!telefono || !/^\+?\d{1,14}$/.test(telefono)){
+      setTelefonoError('Teléfono inválido (requerido, solo números y +, máximo 14 caracteres)')
       return
     }
     // direccion length
@@ -131,6 +135,7 @@ export default function ClienteForm({ token }){
     setSuggestions([])
     setSearch('')
     setSelectedHasVentas(false)
+    setClienteVentasPage(1)
     // check if cliente has ventas; disable delete if so
     try{
       const res = await api.getVentas(token, { cliente_id: c.id, per_page: 1 })
@@ -138,29 +143,42 @@ export default function ClienteForm({ token }){
       setSelectedHasVentas(total > 0)
     
       // Load ventas history for selected cliente
-      loadClienteVentas(c.id)
+      loadClienteVentas(c.id, 1)
     }catch(e){ console.error('error checking ventas for selected cliente', e); setSelectedHasVentas(false) }
   }
 
-  async function loadClienteVentas(clienteId){
+  async function loadClienteVentas(clienteId, p = 1){
     if (!clienteId) { setClienteVentas([]); return }
     setVentasLoading(true)
     try{
-      const res = await api.getVentas(token, { cliente_id: clienteId, per_page: ventasPerPage })
+      const res = await api.getVentas(token, { cliente_id: clienteId, per_page: ventasPerPage, page: p })
       const items = res.data || res.ventas || res || []
       // sort by date desc if possible
       items.sort((a,b)=>{ const da = new Date(a.created_at||a.createdAt||a.date||null); const db = new Date(b.created_at||b.createdAt||b.date||null); if (isNaN(da)) return 1; if (isNaN(db)) return -1; return db.getTime() - da.getTime() })
+      const meta = res.meta || {}
+      const lastPage = Number(meta.last_page) || Number(res.last_page) || 1
+      const currentPage = Number(meta.current_page) || Number(res.current_page) || p
+      const total = Number(meta.total) || (Array.isArray(res) ? items.length : 0)
       setClienteVentas(items)
+      setClienteVentasHasNext(currentPage < lastPage)
+      setClienteVentasTotal(total)
     }catch(e){ console.error('error loading ventas for cliente', e); setClienteVentas([]) }
     setVentasLoading(false)
   }
 
   // reload ventas when global ventas are updated
   useEffect(()=>{
-    function onVentasUpdated(){ if (selectedCliente) loadClienteVentas(selectedCliente.id) }
+    function onVentasUpdated(){ if (selectedCliente) loadClienteVentas(selectedCliente.id, clienteVentasPage) }
     window.addEventListener('ventas-updated', onVentasUpdated)
     return ()=> window.removeEventListener('ventas-updated', onVentasUpdated)
-  }, [selectedCliente])
+  }, [selectedCliente, clienteVentasPage])
+
+  // reload cliente ventas when page changes
+  useEffect(()=>{
+    if (selectedCliente) {
+      loadClienteVentas(selectedCliente.id, clienteVentasPage)
+    }
+  }, [clienteVentasPage, selectedCliente])
 
   // detect small screens for card layout (match VentasList behavior)
   useEffect(()=>{
@@ -185,6 +203,8 @@ export default function ClienteForm({ token }){
       setEditing(false)
       setNombre(''); setTelefono(''); setDireccion('')
       setSelectedHasVentas(false)
+      setClienteVentas([])
+      setClienteVentasPage(1)
       await load()
     }catch(err){
       console.error(err)
@@ -197,6 +217,8 @@ export default function ClienteForm({ token }){
     setEditing(false)
     setNombre(''); setTelefono(''); setDireccion('')
     setSelectedHasVentas(false)
+    setClienteVentas([])
+    setClienteVentasPage(1)
   }
 
   async function handleDeleteCliente(){
@@ -231,6 +253,8 @@ export default function ClienteForm({ token }){
       setEditing(false)
       setNombre(''); setTelefono(''); setDireccion('')
       setSelectedHasVentas(false)
+      setClienteVentas([])
+      setClienteVentasPage(1)
       await load()
     }catch(err){
       console.error(err)
@@ -249,7 +273,7 @@ export default function ClienteForm({ token }){
             className="cliente-search-input"
             placeholder={"🔍 Buscar cliente por nombre o teléfono"}
             value={search}
-            onChange={e=>{ setSearch(e.target.value); setSelectedCliente(null); setEditing(false) }}
+            onChange={e=>{ setSearch(e.target.value); setSelectedCliente(null); setEditing(false); setClienteVentas([]); setClienteVentasPage(1) }}
             onBlur={()=>{ blurTimeoutRef.current = setTimeout(()=>setSuggestions([]), 200) }}
             onFocus={()=>{ if(blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current) }}
             style={{width:'100%'}}
@@ -299,6 +323,7 @@ export default function ClienteForm({ token }){
               type="tel"
               placeholder="Teléfono"
               value={telefono}
+              required
               onChange={e=>{
                 // allow only digits and leading +, max 14 chars
                 let v = e.target.value || ''
@@ -310,7 +335,7 @@ export default function ClienteForm({ token }){
                 if (hasPlus && e.target.value[0] === '+') v = '+' + v
                 v = v.slice(0,14)
                 setTelefono(v)
-                if (v && !/^\+?\d{1,14}$/.test(v)) setTelefonoError('Teléfono inválido (solo números y +)')
+                if (!v || !/^\+?\d{1,14}$/.test(v)) setTelefonoError('Teléfono inválido (requerido, solo números y +, máximo 14 caracteres)')
                 else setTelefonoError('')
               }}
               maxLength={14}
@@ -426,6 +451,15 @@ export default function ClienteForm({ token }){
                     </div>
                   )
                 })}
+              </div>
+            )}
+            {clienteVentas.length > 0 && (
+              <div className="ventas-pagination" style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:12}}>
+                <div>
+                  <button className="btn-ghost pagination-btn" onClick={()=> setClienteVentasPage(p => Math.max(1, p-1))} disabled={clienteVentasPage<=1}>Anterior</button>
+                  <button className="btn-ghost pagination-btn" onClick={()=> setClienteVentasPage(p => p+1)} disabled={!clienteVentasHasNext} style={{marginLeft:8}}>Siguiente</button>
+                </div>
+                <div style={{fontSize:13,color:'#666'}}>Página {clienteVentasPage}</div>
               </div>
             )}
           </div>

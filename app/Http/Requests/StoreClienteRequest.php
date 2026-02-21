@@ -15,7 +15,7 @@ class StoreClienteRequest extends FormRequest
     {
         return [
             'nombre' => 'required|string|max:255',
-            'telefono' => 'required|string|max:20|unique:clientes,telefono',
+            'telefono' => 'nullable|string|max:20',
             'direccion' => 'nullable|string|max:500',
         ];
     }

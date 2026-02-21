@@ -20,6 +20,7 @@ class VentaResource extends JsonResource
             'tipo_venta' => $this->tipo_venta,
             'monto' => $this->monto,
             'status' => $this->status,
+            'descripcion' => $this->descripcion,
             'created_by' => $this->created_by,
             'creator' => $this->whenLoaded('creator', function () {
                 return [

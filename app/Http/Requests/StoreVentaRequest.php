@@ -19,7 +19,8 @@ class StoreVentaRequest extends FormRequest
             'status' => 'sometimes|in:pendiente,entregado,pagado',
             'tipo_venta' => 'required|in:primera,recarga',
             'monto' => 'required|numeric|min:0',
-            'date' => 'sometimes|date'
+            'date' => 'sometimes|date',
+            'descripcion' => 'nullable|string|max:500'
         ];
     }
 }

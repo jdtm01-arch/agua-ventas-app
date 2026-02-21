@@ -14,6 +14,7 @@ export default function VentaForm({ token }){
   const [montoError, setMontoError] = useState('')
   const [status, setStatus] = useState('pendiente')
   const [date, setDate] = useState(new Date().toISOString().slice(0,10))
+  const [descripcion, setDescripcion] = useState('')
   const [message, setMessage] = useState(null)
   const messageRef = useRef(null)
   const messageTimeoutRef = useRef(null)
@@ -51,10 +52,11 @@ export default function VentaForm({ token }){
     if (isNaN(parsedMonto) || parsedMonto < 0) { setMessage({ text: 'El monto debe ser un número mayor o igual a 0', type: 'error' }); return }
     try{
       const isoDate = date ? `${date}T00:00:00-05:00` : undefined
-      await api.createVenta({ cliente_id: clienteId, tipo_venta: tipo, monto: parsedMonto, status, date: isoDate }, token)
+      await api.createVenta({ cliente_id: clienteId, tipo_venta: tipo, monto: parsedMonto, status, date: isoDate, descripcion }, token)
       setMessage({ text: 'Venta creada', type: 'success' })
       // clear form
       setMonto('')
+      setDescripcion('')
       setDate(new Date().toISOString().slice(0,10))
       setSelectedCliente(null)
       setClienteId('')
@@ -180,6 +182,23 @@ export default function VentaForm({ token }){
             <input type="date" value={date} onChange={e=>setDate(e.target.value)} />
             <div style={{fontSize:12,color:'#666'}}>Zona horaria: America/Lima (GMT-5)</div>
           </div>
+        </div>
+
+        <div className="venta-row">
+          <label style={{width:'100%'}}>Descripción (máximo 500 caracteres)
+            <textarea
+              placeholder="Descripción de la venta (opcional)"
+              value={descripcion}
+              onChange={e=>{
+                let v = e.target.value
+                if (v.length <= 500) setDescripcion(v)
+                else setDescripcion(v.slice(0, 500))
+              }}
+              maxLength={500}
+              style={{minHeight:'80px', resize:'vertical'}}
+            />
+            <div style={{fontSize:12, color:'#666', marginTop:4}}>{descripcion.length}/500</div>
+          </label>
         </div>
 
         <div className="button-submit-right">

@@ -108,6 +108,18 @@ button{cursor:pointer}
 .status-entregado{background:rgba(240,173,78,0.12);color:#8a4f18;border-color:rgba(240,173,78,0.22)}
 .status-pagado{background:rgba(40,167,69,0.12);color:#1f7a34;border-color:rgba(40,167,69,0.22)}
 
+/* make badges that have extra info appear clickable */
+.status-badge.clickable{cursor:pointer}
+.status-badge.clickable{
+  cursor:pointer;
+  transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+}
+.status-badge.clickable:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(2,126,250,0.08);
+  filter: brightness(0.98);
+}
+
 /* action icon buttons */
 .action-btn{display:inline-flex;align-items:center;justify-content:center;gap:0;padding:0;width:32px;height:32px;border-radius:999px;border:0;background:var(--color-primary);color:#fff;cursor:pointer}
 .action-btn .action-icon{display:block}
@@ -116,23 +128,25 @@ button{cursor:pointer}
 .action-btn:active{transform:translateY(1px)}
 
 /* Ensure the actions column keeps a fixed width and buttons don't wrap */
-.ventas-table thead th:nth-child(6), .ventas-table tbody td:nth-child(6) {
-  width: 110px;
-  min-width: 110px;
-  max-width: 110px;
+.ventas-table thead th:last-child, .ventas-table tbody td:last-child {
+  width: 130px;
+  min-width: 130px;
+  max-width: 130px;
   white-space: nowrap;
   text-align: right;
 }
 
 /* Keep action buttons inline and predictable spacing */
 .ventas-table td .action-btn{margin-left:6px;margin-right:0}
+.ventas-table td:last-child{padding-right:10px}
 
-/* Truncate long descriptions so they don't push other columns */
+/* Allow description to show full text and wrap; keep actions column fixed width */
 .ventas-table tbody td:nth-child(5) {
-  max-width: 320px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: none;
+  overflow: visible;
+  white-space: normal;
+  word-break: break-word;
+  padding-right: 12px;
 }
 
 /* Simple loader */

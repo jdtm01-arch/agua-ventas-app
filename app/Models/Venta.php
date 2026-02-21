@@ -12,7 +12,8 @@ class Venta extends Model
         'tipo_venta',
         'monto',
         'status',
-        'created_by'
+        'created_by',
+        'descripcion'
     ];
 
     public function cliente()

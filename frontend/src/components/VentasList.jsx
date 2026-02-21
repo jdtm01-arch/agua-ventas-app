@@ -14,6 +14,7 @@ export default function VentasList({ token }){
   const [statusFilter, setStatusFilter] = useState('all')
   const [page, setPage] = useState(1)
   const [hasNext, setHasNext] = useState(false)
+  const [expandedVentaDesc, setExpandedVentaDesc] = useState(null)
   const perPage = Number(PAGINACION) || 20
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
@@ -158,7 +159,18 @@ export default function VentasList({ token }){
                     <td>{formatDateDMY(v.created_at || v.createdAt)}</td>
                     <td>{tipoText}</td>
                     <td>{formatCurrency(v.monto)}</td>
-                    <td><span className={`status-badge ${statusClass}`}>{statusText}</span></td>
+                    <td>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={()=>{ if (v.descripcion) setExpandedVentaDesc(v.descripcion) }}
+                        onKeyDown={(e)=>{ if ((e.key === 'Enter' || e.key === ' ') && v.descripcion) setExpandedVentaDesc(v.descripcion) }}
+                        className={`status-badge ${statusClass} ${v.descripcion ? 'clickable' : ''}`}
+                        title={v.descripcion ? 'Ver descripción' : ''}
+                      >
+                        {statusText}
+                      </span>
+                    </td>
                     <td>
                       {canModify && (
                         <button className="action-btn" onClick={()=>setEditing(v)} aria-label={`Editar venta ${v.id}`} title="Editar">
@@ -217,7 +229,17 @@ export default function VentasList({ token }){
                   <div className="venta-row"><strong>Fecha:</strong> {formatDateDMY(v.created_at || v.createdAt)}</div>
                   <div className="venta-row"><strong>Tipo:</strong> {tipoText}</div>
                   <div className="venta-row"><strong>Monto (S/):</strong> {formatCurrency(v.monto)}</div>
-                  <div className="venta-row"><strong>Status:</strong> <span className={`status-badge ${statusClass}`}>{statusText}</span></div>
+                  <div className="venta-row"><strong>Status:</strong> <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={()=>{ if (v.descripcion) setExpandedVentaDesc(v.descripcion) }}
+                    onKeyDown={(e)=>{ if ((e.key === 'Enter' || e.key === ' ') && v.descripcion) setExpandedVentaDesc(v.descripcion) }}
+                    className={`status-badge ${statusClass} ${v.descripcion ? 'clickable' : ''}`}
+                    title={v.descripcion ? 'Ver descripción' : ''}
+                  >{statusText}</span></div>
+                  {v.descripcion && (
+                    <div className="venta-row"><strong>Descripción:</strong> <div style={{fontSize:13, color:'#666', marginTop:4, whiteSpace:'normal'}}>{v.descripcion}</div></div>
+                  )}
                   <div className="venta-actions">
                     {canModify ? (
                       <button className="action-btn" onClick={()=>setEditing(v)} aria-label={`Editar venta ${v.id}`} title="Editar">
@@ -258,6 +280,19 @@ export default function VentasList({ token }){
                 </div>
               )
             })}
+          </div>
+        )}
+
+        {/* Modal to show descripcion when status clicked */}
+        {expandedVentaDesc && (
+          <div className="modal-backdrop open">
+            <div className="modal-dialog open">
+              <h3>Descripción</h3>
+              <div style={{marginTop:8, marginBottom:12, maxHeight: '50vh', overflowY:'auto', whiteSpace:'pre-wrap'}}>{expandedVentaDesc}</div>
+              <div className="modal-footer">
+                <button className="btn-ghost" onClick={()=>setExpandedVentaDesc(null)}>Cerrar</button>
+              </div>
+            </div>
           </div>
         )}
         </>

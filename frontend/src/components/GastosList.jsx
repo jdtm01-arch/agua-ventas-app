@@ -7,6 +7,8 @@ import { LIMITE_EDICION, PAGINACION } from '../config'
 export default function GastosList({ token, onChanged }){
   const [gastos, setGastos] = useState([])
   const [tipos, setTipos] = useState([])
+  const [tipoFilter, setTipoFilter] = useState('all')
+  const [expandedDesc, setExpandedDesc] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [editingGasto, setEditingGasto] = useState(null)
   const [editTipo, setEditTipo] = useState('')
@@ -27,6 +29,9 @@ export default function GastosList({ token, onChanged }){
     setLoading(true)
     try{
       const params = { per_page: perPage, page: p }
+      if (tipoFilter && tipoFilter !== 'all') {
+        params.tipo_de_gasto_id = tipoFilter
+      }
       const res = await api.getGastos(token, params)
       let items = res.data || res.gastos || res || []
       // order from most recent to oldest by created_at
@@ -70,6 +75,12 @@ export default function GastosList({ token, onChanged }){
 
   // reload when page changes
   useEffect(()=>{ load(page) }, [page])
+
+  // when tipo filter changes, reset to first page and load
+  useEffect(()=>{
+    if (page !== 1) setPage(1)
+    else load(1)
+  }, [tipoFilter])
 
   function startEdit(g){
     const isAdmin = user?.is_admin || user?.roles?.includes?.('admin') || user?.role === 'admin'
@@ -140,9 +151,18 @@ export default function GastosList({ token, onChanged }){
 
   return (
     <div style={{marginTop:12}}>
-      <div style={{display:'flex',alignItems:'baseline',gap:12}}>
-        <h2 style={{margin:0}}>Gastos</h2>
-        <div style={{fontSize:13,color:'#666'}}>Mostrando {gastos.length} de {totalGastos}</div>
+      <div className="ventas-header">
+        <div style={{display:'flex',alignItems:'baseline',gap:12}}>
+          <h2 style={{margin:0}}>Gastos</h2>
+          <div style={{fontSize:13,color:'#666'}}>Mostrando {gastos.length} de {totalGastos}</div>
+        </div>
+        <div className="ventas-filter">
+          <label htmlFor="filtro-tipo">Filtrar:</label>
+          <select id="filtro-tipo" value={tipoFilter} onChange={e=>setTipoFilter(e.target.value)}>
+            <option value="all">Todos</option>
+            {tipos.map(t=> <option key={t.id} value={t.id}>{t.nombre}</option>)}
+          </select>
+        </div>
       </div>
       {loading && <div className="loader" role="status" aria-label="Cargando gastos"></div>}
       {(!loading && gastos.length===0) && <div>No hay gastos</div>}
@@ -168,7 +188,11 @@ export default function GastosList({ token, onChanged }){
                     <td>{formatDate(g.created_at || g.createdAt)}</td>
                     <td>{g.tipo?.nombre || g.tipo_de_gasto_id}</td>
                     <td>{formatCurrency(g.monto)}</td>
-                    <td style={{maxWidth:320}}>{g.descripcion || ''}</td>
+                    <td>
+                      <div className="gasto-desc-full" title={g.descripcion || ''} style={{whiteSpace:'normal'}}>
+                        {g.descripcion || ''}
+                      </div>
+                    </td>
                     <td>
                       {(() => {
                         const isAdmin = user?.is_admin || user?.roles?.includes?.('admin') || user?.role === 'admin'
@@ -267,6 +291,18 @@ export default function GastosList({ token, onChanged }){
           onSaved={()=>{ load(page); setEditingGasto(null); if (onChanged) onChanged() }}
           
         />
+      )}
+      {/* Modal para mostrar descripción completa */}
+      {expandedDesc && (
+        <div style={{position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.3)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000}}>
+          <div style={{background:'#fff', padding:20, borderRadius:8, maxWidth:500, maxHeight:400, overflowY:'auto'}}>
+            <h3 style={{margin:'0 0 12px 0'}}>Descripción del Gasto</h3>
+            <p style={{margin:'0 0 16px 0', lineHeight:1.6}}>
+              {gastos.find(g => g.id === expandedDesc)?.descripcion || ''}
+            </p>
+            <button className="btn-ghost" onClick={()=>setExpandedDesc(null)} style={{padding:'8px 12px'}}>Cerrar</button>
+          </div>
+        </div>
       )}
       {gastos.length>0 && (
         <div className="ventas-pagination" style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:12}}>

@@ -18,6 +18,12 @@ class GastoController extends Controller
             $query->where('user_id', $user->id);
         }
 
+        // allow filtering by tipo_de_gasto_id
+        $tipoId = $request->query('tipo_de_gasto_id');
+        if ($tipoId) {
+            $query->where('tipo_de_gasto_id', $tipoId);
+        }
+
         // Support both 'per_page' (Laravel paginate standard) and 'limit' (legacy)
         $perPage = intval($request->query('per_page', $request->query('limit', 15)));
         if ($perPage <= 0) $perPage = 15;

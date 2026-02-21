@@ -22,6 +22,12 @@ class VentaController extends Controller
             $query->where('created_by', $user->id);
         }
 
+        // allow filtering by cliente_id
+        $clienteId = $request->query('cliente_id');
+        if ($clienteId) {
+            $query->where('cliente_id', $clienteId);
+        }
+
         // allow filtering by status (pendiente, entregado, pagado)
         $status = $request->query('status');
         if ($status) {
@@ -51,6 +57,7 @@ class VentaController extends Controller
                 'monto' => $request->monto ?? $request->total,
                 'status' => $request->status ?? 'pendiente',
                 'created_by' => $request->user()->id ?? null,
+                'descripcion' => $request->descripcion ?? null,
             ]);
 
             if ($request->filled('date')) {
@@ -96,11 +103,12 @@ class VentaController extends Controller
     {
         $this->authorize('update', $venta);
 
-        $data = $request->only(['monto', 'tipo_venta', 'date']);
+        $data = $request->only(['monto', 'tipo_venta', 'date', 'descripcion']);
 
         $validator = \Validator::make($data, [
             'monto' => 'sometimes|numeric|min:0',
-            'tipo_venta' => 'sometimes|in:primera,recarga'
+            'tipo_venta' => 'sometimes|in:primera,recarga',
+            'descripcion' => 'sometimes|nullable|string|max:500'
         ]);
 
         if ($validator->fails()) {
